@@ -3,33 +3,72 @@
 
 # # Get Shapefile
 
-# In[9]:
+# In[ ]:
+
+
+def check_crs(shapefile):
+    
+
+    # Load the shapefile
+    gdf = gpd.read_file(shapefile)
+    
+    # Check if CRS is defined
+    valid_crs = gdf.crs
+    if valid_crs:
+        print("CRS is defined:", gdf.crs)
+    else:
+        print("CRS is NOT defined.")
+
+
+# In[15]:
 
 
 def get_shp():
-
     from pathlib import Path
-    
-    while True: # This function runs until input is valid
+    import geopandas as gpd
+    from pyproj import CRS
+
+    while True:  # This function runs until input is valid
         shp_input = input("Enter the path to the shapefile you want to analyze: ").strip()
         shp_path = Path(shp_input)
-    
+
         # If the input is a file path
         if shp_path.is_file() and shp_path.suffix == '.shp':
-            print("Valid shapefile found.")
-            return shp_path
-    
+            try:
+                gdf = gpd.read_file(shp_path)
+
+                # Check if CRS is defined
+                if gdf.crs:
+                    try:
+                        crs = CRS(gdf.crs)
+                        print("Valid shapefile and valid CRS found:", crs.to_string())
+                        return shp_path
+                    except Exception as e:
+                        print("Shapefile found, but CRS is invalid:", e)
+                        continue
+                else:
+                    print("Shapefile found, but CRS is not defined.")
+                    continue
+
+            except Exception as e:
+                print("Error reading shapefile:", e)
+                continue
+
         # If the input is a folder path, search for any .shp file inside
         elif shp_path.is_dir():
             shp_files = list(shp_path.glob("*.shp"))
             if shp_files:
-                print(f"Found shapefiles: {[f.name for f in shp_files]}. \nPlease append the filename to the path.")
+                print(f"Found shapefiles: {[f.name for f in shp_files]}. \nPlease append the filename to the path and try again.")
+                continue
             else:
                 print("No shapefiles found in the folder.")
-                return None
+                continue
+
         else:
             print("Invalid path or not a shapefile.")
-            return None
+            continue
+
+
 
 # /home/luser/Documents/Code/lokal_climate_analysis/Data/berlin12047_EPSG31467.shp
 shp = get_shp()
@@ -1103,34 +1142,4 @@ def plot_vegetation_phase_length():
     plt.savefig(plot_path, bbox_inches='tight', dpi=300)
     print(f'Successfully created and saved plot: {plotname}')
 plot_vegetation_phase_length()
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
 
