@@ -3,3 +3,4 @@ plots/
 *.json
 roadmap.txt
 ZonalClimateAnalyzer.ipynb
+.ipynb_checkpoints/

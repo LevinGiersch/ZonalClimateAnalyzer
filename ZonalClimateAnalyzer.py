@@ -3,7 +3,7 @@
 
 # # Get Shapefile
 
-# In[ ]:
+# In[1]:
 
 
 def check_crs(shapefile):
@@ -20,7 +20,7 @@ def check_crs(shapefile):
         print("CRS is NOT defined.")
 
 
-# In[15]:
+# In[2]:
 
 
 def get_shp():
@@ -29,7 +29,9 @@ def get_shp():
     from pyproj import CRS
 
     while True:  # This function runs until input is valid
-        shp_input = input("Enter the path to the shapefile you want to analyze: ").strip()
+        print('\nThis Program lets you analyze the climate history of any area within Germany.')
+        print('You only need a shapefile defining the area you want to analyze.')
+        shp_input = input('\nEnter the path to the shapefile: ').strip()
         shp_path = Path(shp_input)
 
         # If the input is a file path
@@ -41,31 +43,31 @@ def get_shp():
                 if gdf.crs:
                     try:
                         crs = CRS(gdf.crs)
-                        print("Valid shapefile and valid CRS found:", crs.to_string())
+                        print(f'Valid shapefile with valid CRS found.\n')
                         return shp_path
                     except Exception as e:
-                        print("Shapefile found, but CRS is invalid:", e)
+                        print(f'Shapefile found, but CRS is invalid: {e}\n')
                         continue
                 else:
-                    print("Shapefile found, but CRS is not defined.")
+                    print('Shapefile found, but CRS is not defined.\n')
                     continue
 
             except Exception as e:
-                print("Error reading shapefile:", e)
+                print(f'Error reading shapefile: {e}\n')
                 continue
 
         # If the input is a folder path, search for any .shp file inside
         elif shp_path.is_dir():
             shp_files = list(shp_path.glob("*.shp"))
             if shp_files:
-                print(f"Found shapefiles: {[f.name for f in shp_files]}. \nPlease append the filename to the path and try again.")
+                print(f'Found shapefiles: {[f.name for f in shp_files]}. \nPlease append the filename to the path and try again.\n')
                 continue
             else:
-                print("No shapefiles found in the folder.")
+                print('No shapefile found in the folder.')
                 continue
 
         else:
-            print("Invalid path or not a shapefile.")
+            print('Invalid path or not a shapefile.')
             continue
 
 
@@ -76,44 +78,47 @@ shp = get_shp()
 
 # # Define Functions
 
-# In[4]:
+# In[3]:
 
 
 def loading_bar(current, total, current_item, message='Progress:', bar_length=40):
     """
-    Displays a loading/progress bar that works in both Jupyter Notebooks and terminals.
+    Displays a single-line loading/progress bar that works in both Jupyter Notebooks and terminals.
     """
     import sys
-    import os
 
     percent = current / total
     filled_length = int(bar_length * percent)
     bar = '█' * filled_length + '-' * (bar_length - filled_length)
-    line = f'{message}\nProgress: |{bar}| {percent*100:6.2f}% ({current}/{total})\nCurrent file: {current_item}'
+    line = f'{message} |{bar}| {percent*100:6.2f}% ({current}/{total}) - {current_item}'
 
     # Detect if running in IPython/Jupyter
     try:
         from IPython.display import clear_output
+        get_ipython
         in_notebook = True
-    except ImportError:
+    except (ImportError, NameError):
         in_notebook = False
 
     if in_notebook:
+        from IPython.display import display, clear_output
         clear_output(wait=True)
         print(line)
     else:
-        # Use carriage return for terminal
-        sys.stdout.write('\r' + line.replace('\n', '\n'))
+        # Overwrite line in terminal
+        sys.stdout.write('\r' + line)
         sys.stdout.flush()
 
-    # If finished, print a newline
     if current >= total:
         print('\nFinished!\n')
+
+#loading bar sucks.
+from tqdm import tqdm
 
 
 # # Download Data
 
-# In[5]:
+# In[4]:
 
 
 def download_dwd_data(folder: str, base_url: str, file_types=['.asc.gz', '.pdf', '.zip']):
@@ -173,7 +178,7 @@ def download_dwd_data(folder: str, base_url: str, file_types=['.asc.gz', '.pdf',
                 print(f'Failed to download: {file_url}, status code: {file_response.status_code}')
 
 
-# In[6]:
+# In[5]:
 
 
 # Get list of all download locations containing the data to download:
@@ -207,7 +212,7 @@ folder_download_locations = [
 download_locations = [base_download_location+f for f in folder_download_locations]
 
 
-# In[5]:
+# In[35]:
 
 
 # Download the data
@@ -220,14 +225,17 @@ raster_path.mkdir(parents=True, exist_ok=True)
 target_folder = raster_path
 
 # Download
-for i, location in enumerate(download_locations, start=1):
-    loading_bar(i, len(download_locations), location, 'Downloading Rasterfiles')
+from tqdm import tqdm
+for location in tqdm(download_locations,
+                     desc='',
+                     bar_format='{l_bar}{bar:40}| ({n_fmt}/{total_fmt}) Downloading Rasterfiles. This may take a few minutes.',
+                     ncols=120):
     download_dwd_data(target_folder, location, file_types=['.asc.gz', '.pdf', '.zip'])
 
 
 # # MAIN
 
-# In[7]:
+# In[ ]:
 
 
 def list_of_files(folder, file_type='.gz'):
@@ -247,7 +255,7 @@ def list_of_files(folder, file_type='.gz'):
     return files
 
 
-# In[8]:
+# In[ ]:
 
 
 def rename_dwd_file(file:str):
@@ -266,7 +274,7 @@ def rename_dwd_file(file:str):
         return file
 
 
-# In[9]:
+# In[ ]:
 
 
 def decompress_file(file):
@@ -321,7 +329,7 @@ def decompress_file(file):
     return decompressed_file
 
 
-# In[10]:
+# In[ ]:
 
 
 def asc_to_tif_add_crs(asc_input: str, prj_txt: str):
@@ -367,7 +375,7 @@ def asc_to_tif_add_crs(asc_input: str, prj_txt: str):
     return tif_output
 
 
-# In[11]:
+# In[ ]:
 
 
 def delete_raster_files(folder_path: str):
@@ -390,7 +398,7 @@ def delete_raster_files(folder_path: str):
             deleted_files += 1
 
 
-# In[12]:
+# In[ ]:
 
 
 def change_shp_crs(shp_input: str, prj_txt: str):
@@ -426,7 +434,7 @@ def change_shp_crs(shp_input: str, prj_txt: str):
     gdf_transformed = gdf.to_crs(target_crs)
 
     # Define Output name
-    shp_output = shp_input.replace('.shp', '')+'_'+str(target_crs).replace(':','')+'.shp'
+    shp_output = str(shp_input).replace('.shp', '')+'_'+str(target_crs).replace(':','')+'.shp'
 
     # Save transformed shp to shp_output
     gdf_transformed.to_file(shp_output, encoding='utf-8')
@@ -436,7 +444,7 @@ def change_shp_crs(shp_input: str, prj_txt: str):
     return shp_output
 
 
-# In[13]:
+# In[ ]:
 
 
 def calculate_zonal_stats(shp: str, tif: str):
@@ -461,7 +469,7 @@ def calculate_zonal_stats(shp: str, tif: str):
     return stats
 
 
-# In[14]:
+# In[ ]:
 
 
 def lokal_climate_analysis(shp_input:str, raster_folder: str, prj_file: str):
@@ -478,6 +486,7 @@ def lokal_climate_analysis(shp_input:str, raster_folder: str, prj_file: str):
     Returns:
         json_output_path_name (str): path to the created json file conatining rasterstats calculations.
     """
+    from tqdm import tqdm
 
     # Prepare shapefile:
     change_shp_crs(shp_input, prj_file)
@@ -486,16 +495,22 @@ def lokal_climate_analysis(shp_input:str, raster_folder: str, prj_file: str):
     files_asc_gz = list_of_files(raster_folder, file_type='.asc.gz')
 
     # Decompress rasterfiles:
-    for i, f in enumerate(files_asc_gz, start=1):
-        loading_bar(i, len(files_asc_gz), f, 'Decompressing files')
+    print()
+    for f in tqdm(files_asc_gz,
+                  desc='',
+                  bar_format='{l_bar}{bar:40}| ({n_fmt}/{total_fmt}) Decompressing files.',
+                  ncols=120):
         decompress_file(f)
 
     # Create list of decompressed .asc rasterfiles:
     files_asc = list_of_files(raster_folder, file_type='.asc')
 
     # Transform decompressed files to tif and add crs:
-    for i, f in enumerate(files_asc, start=1):
-        loading_bar(i, len(files_asc), f, 'Transforming files from .asc to .tif')
+    print()
+    for f in tqdm(files_asc,
+                  desc='',
+                  bar_format='{l_bar}{bar:40}| ({n_fmt}/{total_fmt}) Transforming files to the right format.',
+                  ncols=120):
         asc_to_tif_add_crs(f, prj_file)
 
     # Create list .tif rasterfiles
@@ -508,8 +523,11 @@ def lokal_climate_analysis(shp_input:str, raster_folder: str, prj_file: str):
     rasterstats_list = []
 
     # Iterate over files_tif and perform rasterstats calculations on each rasterfile and the shapefile:
-    for i, f in enumerate(files_tif, start =1):
-        loading_bar(i, len(files_tif), f, 'Calculating rasterstats')
+    print()
+    for f in tqdm(files_tif,
+                  desc='',
+                  bar_format='{l_bar}{bar:40}| ({n_fmt}/{total_fmt}) Calculating rasterstats.',
+                  ncols=120):
         rasterstats_list.append(calculate_zonal_stats(shapefile, f)) # Append rasterstats to rasterstats_list
 
     # Combine rasterstats and the name of the raster the stats are calculated with
@@ -546,7 +564,7 @@ def lokal_climate_analysis(shp_input:str, raster_folder: str, prj_file: str):
     return json_output_path_name
 
 
-# In[15]:
+# In[ ]:
 
 
 from pathlib import Path
@@ -559,18 +577,22 @@ rasterstats_json = lokal_climate_analysis(shp, raster_path, prj_file) # shp come
 
 # # Visualizer
 
-# In[16]:
+# In[32]:
 
 
 # Import packages
 import os
 import json
 from pprint import pprint
+import matplotlib
+matplotlib.use('Agg')  # Use a non-GUI backend. prevents QSocketNotifier: Can only be used with threads started with QThread message in cmd
 import matplotlib.pyplot as plt
 import numpy as np
 
+print('\nCreating Plots:')
 
-# In[17]:
+
+# In[ ]:
 
 
 input_file = rasterstats_json # Created with lokal_climate_analysis(shp_input, raster_folder, prj_file)
@@ -584,7 +606,7 @@ with open(input_file) as json_file:
 # how to access information: rs['summer_days']['2024'][0]['mean']
 
 
-# In[18]:
+# In[ ]:
 
 
 def years_values(parameter_name:str):
@@ -628,7 +650,7 @@ def years_values(parameter_name:str):
     return title, years, values_max, values_mean, values_min
 
 
-# In[19]:
+# In[ ]:
 
 
 def plot_air_temp_min_mean_max():
@@ -699,7 +721,7 @@ def plot_air_temp_min_mean_max():
 plot_air_temp_min_mean_max()
 
 
-# In[20]:
+# In[ ]:
 
 
 def plot_frost_ice_days():
@@ -757,7 +779,7 @@ def plot_frost_ice_days():
 plot_frost_ice_days()
 
 
-# In[21]:
+# In[ ]:
 
 
 def plot_snowcover_days():
@@ -810,7 +832,7 @@ def plot_snowcover_days():
 plot_snowcover_days()
 
 
-# In[22]:
+# In[ ]:
 
 
 def plot_summer_hot_days():
@@ -868,7 +890,7 @@ def plot_summer_hot_days():
 plot_summer_hot_days()
 
 
-# In[23]:
+# In[ ]:
 
 
 def plot_precipitaion():
@@ -917,7 +939,7 @@ def plot_precipitaion():
 plot_precipitaion()
 
 
-# In[24]:
+# In[ ]:
 
 
 def plot_precipitaion_days():
@@ -979,7 +1001,7 @@ def plot_precipitaion_days():
 plot_precipitaion_days()
 
 
-# In[25]:
+# In[ ]:
 
 
 def plot_sunshine_duration():
@@ -1024,7 +1046,7 @@ def plot_sunshine_duration():
 plot_sunshine_duration()
 
 
-# In[26]:
+# In[ ]:
 
 
 def plot_vegetation_begin_end():
@@ -1085,7 +1107,7 @@ def plot_vegetation_begin_end():
 plot_vegetation_begin_end()
 
 
-# In[27]:
+# In[ ]:
 
 
 def plot_vegetation_phase_length():
@@ -1142,4 +1164,11 @@ def plot_vegetation_phase_length():
     plt.savefig(plot_path, bbox_inches='tight', dpi=300)
     print(f'Successfully created and saved plot: {plotname}')
 plot_vegetation_phase_length()
+
+
+# In[ ]:
+
+
+plot_folder_path = Path.cwd() / 'plots'
+print(f'\nFinished! Plots saved here: \n{plot_folder_path}\n')
 

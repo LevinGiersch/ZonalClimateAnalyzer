@@ -1,18 +1,43 @@
-# ZonalClimateAnalyzer
-This Program will make it easy to look at the climate history of any Place in Germany. All you need is this GitHub repository and a shapefile (filename.shp) with a corresponding projection file (filename.prj). This Program will download climate information for every point in germany from the DWD (https://opendata.dwd.de/climate_environment/CDC/grids_germany/annual/), calculte the climate parameters for your shapefile and return some nice plots 
+# Lokal Climate Analysis  
+*Analyze the climate history of any area inside Germany with nothing more than a shapefile.*
 
-### Prerequesites
-- Stable internet Connection
-- Approx.  7GB of available diskspace
-- All python packages in the pip_installer file
+---
+
+## 1 | Project Purpose
+This script automates an end‑to‑end workflow to  
+
+1. **Download** annual gridded climate rasters (1951 → latest) from the **DWD Climate Data Center (CDC)**.  
+2. **Clip & analyse** those rasters for a user‑supplied area (polygon shapefile).  
+3. **Summarise** the results as zonal statistics (min / mean / max) in a tidy JSON file.  
+4. **Visualise** long‑term trends with ready‑made PNG plots.
+
+The goal is to give municipalities, researchers and students a quick way to quantify and visualise local climate change indicators without manual GIS work.
+
+---
+
+## 2 | Key Features
+| Stage | What happens | Where in code |
+|-------|--------------|---------------|
+| **Input** | Interactive prompt asks for your *.shp* path | `get_shp()` |
+| **Data download** | All relevant **.asc.gz / .zip** rasters fetched from the DWD open‑data mirror | `download_dwd_data()` |
+| **Pre‑processing** | Decompress → rename → add CRS → re‑encode to GeoTIFF | `decompress_file()`, `asc_to_tif_add_crs()` |
+| **Clean‑up** | Source archives removed to keep disk footprint small | `delete_raster_files()` |
+| **Analysis** | Per‑polygon zonal stats with [`rasterstats`](https://pythonhosted.org/rasterstats/) | `calculate_zonal_stats()` |
+| **Output** | `area_rasterstats.json` plus 9 publication‑ready plots in */plots* | visualiser section |
 
 
-### How this Program works:
-1. Asks you for a shapefile
-2. Creates a new python venv
-3. Installs all needed packages in the new python venv
-4. Downloads Raster data containing Climate information of Germany
-5. Calculates climate properties for the provided shapefile
-6. Returns a folder full of Plots and Maps showing the climate history for your shapefile from the years 1901 to 2024
-7. Removes the downloaded rasterfiles
-8. Optional: you can use the provided Latex-File to automatically create a PDF containing all created Plots and Maps
+---
+
+## 3 | Quick‑start
+```bash
+# 1. clone & enter
+git clone https://github.com/<you>/lokal-climate-analysis.git
+cd lokal-climate-analysis
+
+# 2. install Python ≥3.9 deps (recommended: venv/conda)
+pip install -r requirements.txt
+
+# 3. run the script
+python lokal_climate_analysis.py
+# follow the prompt:
+# Enter the path to the shapefile: /path/to/my_area.shp
