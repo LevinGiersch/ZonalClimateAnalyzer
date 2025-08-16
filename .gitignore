@@ -2,5 +2,4 @@ climate_environment_CDC_grids_germany_annual/
 plots/
 *.json
 roadmap.txt
-ZonalClimateAnalyzer.ipynb
 .ipynb_checkpoints/
