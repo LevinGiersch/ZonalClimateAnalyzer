@@ -3,7 +3,7 @@
 
 # # Get Shapefile
 
-# In[1]:
+# In[31]:
 
 
 def check_crs(shapefile:str):
@@ -27,7 +27,7 @@ def check_crs(shapefile:str):
         return False
 
 
-# In[1]:
+# In[32]:
 
 
 def get_shp():
@@ -620,26 +620,39 @@ def years_values(parameter_name:str):
     return title, years, values_max, values_mean, values_min
 
 
-# In[22]:
+# In[38]:
 
 
-def map(shpapefile:str):
+def map(shapefile:str):
     '''
     Takes path to shapefile as string as input.
     Creates interactive map as html.
+    Adds area and perimeter as tooltips on hover in the html map.
     '''
     
     import geopandas as gpd
     import folium
     from pathlib import Path
+    import numpy as np
+
+    shp_path = Path(shapefile)
+    gdf = gpd.read_file(shapefile)
+    if gdf.crs is None:
+        raise ValueError("CRS is missing. Set a CRS before running.")
+
+    # Compute in a local metric CRS
+    gdf_m = gdf.to_crs(gdf.estimate_utm_crs())
+    is_poly = gdf_m.geom_type.str.contains("polygon", case=False, na=False)
+    gdf["area_km2"] = (gdf_m.area.where(is_poly)) / 1_000_000
+    gdf["perim_km"] = (gdf_m.length.where(is_poly)) / 1_000
+    gdf["shapefile"] = shp_path.stem
+
+    # interactive map
+    m = gdf.to_crs(4326).explore(
+        tooltip=["shapefile", "area_km2", "perim_km"],
+        popup=False
+    )
     
-
-    gdf = gpd.read_file(str(shpapefile))
-
-    m = gdf.explore()
-    
-
-
     # Save Map
     mapname = 'map.html'
     map_folder_path = Path.cwd() / 'plots'
