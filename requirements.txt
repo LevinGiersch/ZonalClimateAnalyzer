@@ -1,4 +1,5 @@
-# Core geospatial stack
+# python_requires>=3.10
+
 geopandas>=0.14
 shapely>=2.0
 fiona>=1.9
@@ -7,18 +8,15 @@ rasterstats>=0.19
 pyproj>=3.6
 gdal>=3.8
 
-# Data handling & science
 numpy>=1.23
 pandas>=2.0
 matplotlib>=3.8
 tqdm>=4.66
 
-# Web & utility
 requests>=2.31
 beautifulsoup4>=4.12
 filetype>=1.2
 ipython>=8.22
 
-# Pin Python version used during development
-# python_requires>=3.10
+
 
