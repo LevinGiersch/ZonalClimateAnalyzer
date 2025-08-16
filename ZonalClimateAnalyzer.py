@@ -6,8 +6,13 @@
 # In[1]:
 
 
-def check_crs(shapefile):
-    
+def check_crs(shapefile:str):
+    '''
+    Takes a path to a Shapefile (as String) as Input.
+    Reads shapefile.
+    Returns True if it has a valid CRS,
+    Returns False if it die NOT have a valid CRS.
+    '''
 
     # Load the shapefile
     gdf = gpd.read_file(shapefile)
@@ -16,14 +21,23 @@ def check_crs(shapefile):
     valid_crs = gdf.crs
     if valid_crs:
         print("CRS is defined:", gdf.crs)
+        return True
     else:
         print("CRS is NOT defined.")
+        return False
 
 
-# In[2]:
+# In[1]:
 
 
 def get_shp():
+    '''
+    Lets the user input a path to the shapefile in the terminal.
+    Checks if the path leads to a shapefile.
+    Checks if the shapefile has a valid CRS.
+    Gives feedback depending on the user input.
+    Returns path to the shapefile if Valid shp and CRS are found.
+    '''
     from pathlib import Path
     import geopandas as gpd
     from pyproj import CRS
@@ -70,50 +84,7 @@ def get_shp():
             print('Invalid path or not a shapefile.')
             continue
 
-
-
-# /home/luser/Documents/Code/lokal_climate_analysis/Data/berlin12047_EPSG31467.shp
 shp = get_shp()
-
-
-# # Define Functions
-
-# In[3]:
-
-
-def loading_bar(current, total, current_item, message='Progress:', bar_length=40):
-    """
-    Displays a single-line loading/progress bar that works in both Jupyter Notebooks and terminals.
-    """
-    import sys
-
-    percent = current / total
-    filled_length = int(bar_length * percent)
-    bar = '█' * filled_length + '-' * (bar_length - filled_length)
-    line = f'{message} |{bar}| {percent*100:6.2f}% ({current}/{total}) - {current_item}'
-
-    # Detect if running in IPython/Jupyter
-    try:
-        from IPython.display import clear_output
-        get_ipython
-        in_notebook = True
-    except (ImportError, NameError):
-        in_notebook = False
-
-    if in_notebook:
-        from IPython.display import display, clear_output
-        clear_output(wait=True)
-        print(line)
-    else:
-        # Overwrite line in terminal
-        sys.stdout.write('\r' + line)
-        sys.stdout.flush()
-
-    if current >= total:
-        print('\nFinished!\n')
-
-#loading bar sucks.
-from tqdm import tqdm
 
 
 # # Download Data
@@ -134,7 +105,7 @@ def download_dwd_data(folder: str, base_url: str, file_types=['.asc.gz', '.pdf',
     Example: download_dwd_data('/home/user/Documents/Folder', 'https://opendata.dwd.de/climate_environment/CDC/grids_germany/annual/vegetation_end/', '.pdf')
     '''
 
-    # Implement a test if data is already downloaded and then skip
+    # TODO: Implement a test if data is already in folder and then skip
 
     import os
     from pprint import pprint
@@ -142,7 +113,7 @@ def download_dwd_data(folder: str, base_url: str, file_types=['.asc.gz', '.pdf',
     from bs4 import BeautifulSoup
     from urllib.parse import urljoin   
 
-    # Create folder if it doesn't exist
+    # Create folder if it doesn't exist yet
     os.makedirs(folder, exist_ok=True)
 
     # Retrieve webpage content
@@ -155,7 +126,6 @@ def download_dwd_data(folder: str, base_url: str, file_types=['.asc.gz', '.pdf',
 
     # Find all relevant links
     links = [a['href'] for a in soup.find_all('a', href=True) if a['href'].endswith(tuple(file_types))] # tuple because .endswith does not accept lists
-    #pprint(links)
 
     if not links:
         print('No matching files found to download.')
@@ -165,7 +135,6 @@ def download_dwd_data(folder: str, base_url: str, file_types=['.asc.gz', '.pdf',
     for link in links:
         file_url = urljoin(base_url, link)
         file_path = os.path.join(folder, os.path.basename(link))
-
         #print(f'Downloading: {file_url}')
 
         with requests.get(file_url, stream=True) as file_response:
@@ -212,7 +181,7 @@ folder_download_locations = [
 download_locations = [base_download_location+f for f in folder_download_locations]
 
 
-# In[35]:
+# In[6]:
 
 
 # Download the data
@@ -224,7 +193,7 @@ raster_path = Path.cwd() / 'climate_environment_CDC_grids_germany_annual'
 raster_path.mkdir(parents=True, exist_ok=True)
 target_folder = raster_path
 
-# Download
+# Download data
 from tqdm import tqdm
 for location in tqdm(download_locations,
                      desc='',
@@ -235,10 +204,10 @@ for location in tqdm(download_locations,
 
 # # MAIN
 
-# In[ ]:
+# In[7]:
 
 
-def list_of_files(folder, file_type='.gz'):
+def list_of_files(folder:str, file_type='.gz'):
     '''
     Returns list containing all filesnames in folder with the ending file_type.
 
@@ -255,12 +224,14 @@ def list_of_files(folder, file_type='.gz'):
     return files
 
 
-# In[ ]:
+# In[8]:
 
 
 def rename_dwd_file(file:str):
         """
-        Rename dwd files to remove everything except for the core name and the year
+        Takes filename as string as input.
+        Removes everything except for the core name and the year from the dwd filename.
+        Returns new filename as string.
         """
         file = file.replace('grids_germany_annual_', '')
         file = file.removesuffix('.asc.gz')
@@ -274,10 +245,10 @@ def rename_dwd_file(file:str):
         return file
 
 
-# In[ ]:
+# In[9]:
 
 
-def decompress_file(file):
+def decompress_file(file:str):
     """
     Decompress files and saves a copy in the same folder.
 
@@ -308,7 +279,7 @@ def decompress_file(file):
 
     # Unpack the mis‑labelled “…asc.gz” archive (which is really a ZIP)
     elif ft_ext == 'zip':
-        decompressed_file = Path(rename_dwd_file(file))               # Name for output file
+        decompressed_file = Path(rename_dwd_file(file))         # Name for output file
         zip_path = Path(file).expanduser().resolve()
     
         with zipfile.ZipFile(zip_path) as zf:
@@ -329,10 +300,10 @@ def decompress_file(file):
     return decompressed_file
 
 
-# In[ ]:
+# In[10]:
 
 
-def asc_to_tif_add_crs(asc_input: str, prj_txt: str):
+def asc_to_tif_add_crs(asc_input:str, prj_txt:str):
     """
     Takes asc_input, adds crs (from prj.txt), saves it as .tif in the same folder.
 
@@ -375,15 +346,15 @@ def asc_to_tif_add_crs(asc_input: str, prj_txt: str):
     return tif_output
 
 
-# In[ ]:
+# In[11]:
 
 
-def delete_raster_files(folder_path: str):
+def delete_raster_files(folder_path:str):
     """
-    Löscht alle .asc, .asc.gz und .zip Dateien im angegebenen Ordner (nicht rekursiv).
+    Deletes all .asc, .asc.gz and .zip files within the folder..
 
     Args:
-        folder_path (str): Pfad zum Ordner, in dem die Dateien gelöscht werden sollen.
+        folder_path (str): Path to folder containing the files.
     """
     
     from pathlib import Path
@@ -398,10 +369,10 @@ def delete_raster_files(folder_path: str):
             deleted_files += 1
 
 
-# In[ ]:
+# In[12]:
 
 
-def change_shp_crs(shp_input: str, prj_txt: str):
+def change_shp_crs(shp_input:str, prj_txt:str):
     """
     Takes shp_input, transforms to crs (from prj.txt), outputs as shp_output
 
@@ -444,12 +415,12 @@ def change_shp_crs(shp_input: str, prj_txt: str):
     return shp_output
 
 
-# In[ ]:
+# In[13]:
 
 
-def calculate_zonal_stats(shp: str, tif: str):
+def calculate_zonal_stats(shp:str, tif:str):
     """
-    Calculates zonal stats of the tif for each poly in the shp.
+    Calculates zonal stats of the tif for each feature in the shp.
 
     Args:
         shp (str): path to shp file
@@ -462,17 +433,16 @@ def calculate_zonal_stats(shp: str, tif: str):
     from pprint import pprint
     from rasterstats import zonal_stats
 
-    stats = zonal_stats(shp, tif, all_touched=True) # TRUE? FALSE??
-
-    #pprint(stats)
+    # Set all_touched to False if you want to include only raster-cells that are completely within the shapefile.
+    stats = zonal_stats(shp, tif, all_touched=True)
 
     return stats
 
 
-# In[ ]:
+# In[14]:
 
 
-def lokal_climate_analysis(shp_input:str, raster_folder: str, prj_file: str):
+def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
     """
     Perform rasterstats calculation on shp_input with every raster file in the raster_folder.
 
@@ -564,7 +534,7 @@ def lokal_climate_analysis(shp_input:str, raster_folder: str, prj_file: str):
     return json_output_path_name
 
 
-# In[ ]:
+# In[15]:
 
 
 from pathlib import Path
@@ -572,12 +542,12 @@ from pathlib import Path
 raster_path = str(Path.cwd() / 'climate_environment_CDC_grids_germany_annual')
 prj_file = 'gk3.prj'
 
-rasterstats_json = lokal_climate_analysis(shp, raster_path, prj_file) # shp comes from get_shp() in the beginning of this program
+rasterstats_json = zonal_climate_analysis(shp, raster_path, prj_file) # shp comes from get_shp() in the beginning of this program
 
 
-# # Visualizer
+# # Visualize
 
-# In[32]:
+# In[16]:
 
 
 # Import packages
@@ -585,28 +555,28 @@ import os
 import json
 from pprint import pprint
 import matplotlib
-matplotlib.use('Agg')  # Use a non-GUI backend. prevents QSocketNotifier: Can only be used with threads started with QThread message in cmd
+matplotlib.use('Agg')  # Use a non-GUI backend. Prevents "QSocketNotifier: Can only be used with threads started with QThread" message in cmd.
 import matplotlib.pyplot as plt
 import numpy as np
 
 print('\nCreating Plots:')
 
 
-# In[ ]:
+# In[17]:
 
 
-input_file = rasterstats_json # Created with lokal_climate_analysis(shp_input, raster_folder, prj_file)
+input_file = rasterstats_json # Created with zonal_climate_analysis(shp_input, raster_folder, prj_file)
 
 import json
 
 # Open rasterstats_dict.json file
 with open(input_file) as json_file:
-    rs = json.load(json_file) # rs stands for rasterstats
+    rs = json.load(json_file)
 
-# how to access information: rs['summer_days']['2024'][0]['mean']
+# How to access information: eg. rs['summer_days']['2024'][0]['mean']
 
 
-# In[ ]:
+# In[18]:
 
 
 def years_values(parameter_name:str):
@@ -650,7 +620,38 @@ def years_values(parameter_name:str):
     return title, years, values_max, values_mean, values_min
 
 
-# In[ ]:
+# In[22]:
+
+
+def map(shpapefile:str):
+    '''
+    Takes path to shapefile as string as input.
+    Creates interactive map as html.
+    '''
+    
+    import geopandas as gpd
+    import folium
+    from pathlib import Path
+    
+
+    gdf = gpd.read_file(str(shpapefile))
+
+    m = gdf.explore()
+    
+
+
+    # Save Map
+    mapname = 'map.html'
+    map_folder_path = Path.cwd() / 'plots'
+    map_folder_path.mkdir(parents=True, exist_ok=True)
+    map_path = str(map_folder_path / mapname)
+    m.save(map_path)
+    print(f'Successfully created and saved map: {mapname}')
+
+map(shp)
+
+
+# In[29]:
 
 
 def plot_air_temp_min_mean_max():
@@ -721,7 +722,7 @@ def plot_air_temp_min_mean_max():
 plot_air_temp_min_mean_max()
 
 
-# In[ ]:
+# In[30]:
 
 
 def plot_frost_ice_days():
@@ -779,7 +780,7 @@ def plot_frost_ice_days():
 plot_frost_ice_days()
 
 
-# In[ ]:
+# In[31]:
 
 
 def plot_snowcover_days():
@@ -832,7 +833,7 @@ def plot_snowcover_days():
 plot_snowcover_days()
 
 
-# In[ ]:
+# In[32]:
 
 
 def plot_summer_hot_days():
@@ -890,7 +891,7 @@ def plot_summer_hot_days():
 plot_summer_hot_days()
 
 
-# In[ ]:
+# In[33]:
 
 
 def plot_precipitaion():
@@ -939,7 +940,7 @@ def plot_precipitaion():
 plot_precipitaion()
 
 
-# In[ ]:
+# In[34]:
 
 
 def plot_precipitaion_days():
@@ -1001,7 +1002,7 @@ def plot_precipitaion_days():
 plot_precipitaion_days()
 
 
-# In[ ]:
+# In[35]:
 
 
 def plot_sunshine_duration():
@@ -1046,7 +1047,7 @@ def plot_sunshine_duration():
 plot_sunshine_duration()
 
 
-# In[ ]:
+# In[36]:
 
 
 def plot_vegetation_begin_end():
@@ -1107,7 +1108,7 @@ def plot_vegetation_begin_end():
 plot_vegetation_begin_end()
 
 
-# In[ ]:
+# In[37]:
 
 
 def plot_vegetation_phase_length():
@@ -1166,7 +1167,7 @@ def plot_vegetation_phase_length():
 plot_vegetation_phase_length()
 
 
-# In[ ]:
+# In[38]:
 
 
 plot_folder_path = Path.cwd() / 'plots'
