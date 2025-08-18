@@ -387,6 +387,7 @@ def change_shp_crs(shp_input:str, prj_txt:str):
     import geopandas as gpd
     from rasterio.crs import CRS
     import numpy
+    from pathlib import Path
 
     # CRS from .prj_file
     with open(prj_file, 'r') as f:
@@ -405,7 +406,7 @@ def change_shp_crs(shp_input:str, prj_txt:str):
     gdf_transformed = gdf.to_crs(target_crs)
 
     # Define Output name
-    shp_output = str(shp_input).replace('.shp', '')+'_'+str(target_crs).replace(':','')+'.shp'
+    shp_output = Path.cwd() / Path(str(shp_input).replace('.shp', '')+'_'+str(target_crs).replace(':','')+'.shp').name
 
     # Save transformed shp to shp_output
     gdf_transformed.to_file(shp_output, encoding='utf-8')
@@ -536,6 +537,8 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
 
 # In[15]:
 
+
+# Create JSON
 
 from pathlib import Path
 
