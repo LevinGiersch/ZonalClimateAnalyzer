@@ -42,7 +42,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 # 4. run the script
-python lokal_climate_analysis.py
+python ZonalClimateAnalyzer.py
 # follow the prompt:
 # Enter the path to the shapefile: /path/to/my_area.shp
 
