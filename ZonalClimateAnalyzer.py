@@ -406,7 +406,7 @@ def change_shp_crs(shp_input:str, prj_txt:str):
     gdf_transformed = gdf.to_crs(target_crs)
 
     # Define Output name
-    shp_output = Path.cwd() / Path(str(shp_input).replace('.shp', '')+'_'+str(target_crs).replace(':','')+'.shp').name
+    shp_output = str(Path.cwd() / Path(str(shp_input).replace('.shp', '')+'_'+str(target_crs).replace(':','')+'.shp').name)
 
     # Save transformed shp to shp_output
     gdf_transformed.to_file(shp_output, encoding='utf-8')
