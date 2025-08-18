@@ -623,7 +623,7 @@ def years_values(parameter_name:str):
 # In[38]:
 
 
-def map(shapefile:str):
+def create_map(shapefile:str):
     '''
     Takes path to shapefile as string as input.
     Creates interactive map as html.
@@ -661,7 +661,7 @@ def map(shapefile:str):
     m.save(map_path)
     print(f'Successfully created and saved map: {mapname}')
 
-map(shp)
+create_map(shp)
 
 
 # In[29]:
