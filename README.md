@@ -32,15 +32,21 @@ The goal is to give municipalities, researchers and students a quick way to quan
 ```bash
 # 1. clone & enter
 git clone https://github.com/LevinGiersch/ZonalClimateAnalyzer
-cd lokal-climate-analysis
+cd ZonalClimateAnalyzer
 
-# 2. install Python ≥3.9 deps (recommended: venv/conda)
+# 2. create venv
+python3 -m venv venv
+source venv/bin/activate
+
+# 3. install Python ≥3.9 deps (recommended: venv/conda)
 pip install -r requirements.txt
 
-# 3. run the script
+# 4. run the script
 python lokal_climate_analysis.py
 # follow the prompt:
 # Enter the path to the shapefile: /path/to/my_area.shp
+
+# 5. wait until the process is finished
 ```
 
 Runtime hint: the first execution downloads ≈ 1 GB of rasters and can take 10–20 min (depending on your connection). Subsequent runs use the cached GeoTIFFs and finish in seconds.
