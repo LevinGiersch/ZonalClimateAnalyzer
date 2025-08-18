@@ -31,7 +31,7 @@ The goal is to give municipalities, researchers and students a quick way to quan
 ## 3 | Quick‑start
 ```bash
 # 1. clone & enter
-git clone https://github.com/<you>/lokal-climate-analysis.git
+git clone https://github.com/LevinGiersch/ZonalClimateAnalyzer
 cd lokal-climate-analysis
 
 # 2. install Python ≥3.9 deps (recommended: venv/conda)
