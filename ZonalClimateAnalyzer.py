@@ -410,7 +410,7 @@ def change_shp_crs(shp_input:str, prj_txt:str):
     shp_folder_path.mkdir(parents=True, exist_ok=True)
 
     # Define Output name
-    shp_output = str(plot_folder_path / Path(str(shp_input).replace('.shp', '')+'_'+str(target_crs).replace(':','')+'.shp').name)
+    shp_output = str(shp_folder_path / Path(str(shp_input).replace('.shp', '')+'_'+str(target_crs).replace(':','')+'.shp').name)
 
     # Save transformed shp to shp_output
     gdf_transformed.to_file(shp_output, encoding='utf-8')
