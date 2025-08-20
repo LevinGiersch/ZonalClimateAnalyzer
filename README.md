@@ -84,8 +84,8 @@ A small `gk3.prj` file ships with the repo; shapefiles are re‑projected into t
 ---
 
 ## 6 | Known Limitations
-- Only works under Linux.
-- Only works for shapefiles with exactly one polygon feature.
+- Only works under **Linux**.
+- Only works for **shapefiles with exactly one polygon feature**.
 - Designed for **Germany‑wide 1 km grids** only.  
 - Memory‑intensive if the shapefile contains *many* polygons.  
 - Re‑downloads rasters each year; archive copies yourself for full reproducibility.  
