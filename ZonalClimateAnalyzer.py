@@ -1,6 +1,36 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+# In[ ]:
+
+
+from pathlib import Path
+import os
+import json
+import shutil
+import zipfile
+import gzip
+
+from urllib.parse import urljoin
+import requests
+from bs4 import BeautifulSoup
+
+from tqdm import tqdm
+from pprint import pprint
+
+import numpy as np
+import matplotlib
+import matplotlib.pyplot as plt
+import folium
+
+import geopandas as gpd
+from pyproj import CRS
+import rasterio
+from rasterio.crs import CRS
+from rasterstats import zonal_stats
+import filetype
+
+
 # # Get Shapefile
 
 # In[31]:
@@ -38,9 +68,6 @@ def get_shp():
     Gives feedback depending on the user input.
     Returns path to the shapefile if Valid shp and CRS are found.
     '''
-    from pathlib import Path
-    import geopandas as gpd
-    from pyproj import CRS
 
     while True:  # This function runs until input is valid
         print('\nThis Program lets you analyze the climate history of any area within Germany.')
@@ -106,12 +133,6 @@ def download_dwd_data(folder: str, base_url: str, file_types=['.asc.gz', '.pdf',
     '''
 
     # TODO: Implement a test if data is already in folder and then skip
-
-    import os
-    from pprint import pprint
-    import requests
-    from bs4 import BeautifulSoup
-    from urllib.parse import urljoin   
 
     # Create folder if it doesn't exist yet
     os.makedirs(folder, exist_ok=True)
@@ -186,15 +207,12 @@ download_locations = [base_download_location+f for f in folder_download_location
 
 # Download the data
 
-from pathlib import Path
-
 # Create folder
 raster_path = Path.cwd() / 'climate_environment_CDC_grids_germany_annual'
 raster_path.mkdir(parents=True, exist_ok=True)
 target_folder = raster_path
 
 # Download data
-from tqdm import tqdm
 for location in tqdm(download_locations,
                      desc='',
                      bar_format='{l_bar}{bar:40}| ({n_fmt}/{total_fmt}) Downloading Rasterfiles. This may take a few minutes.',
@@ -217,8 +235,6 @@ def list_of_files(folder:str, file_type='.gz'):
     Return:
         List of all files of file_type within folder
     '''
-
-    import os
 
     files = sorted([os.path.join(folder, f) for f in os.listdir(folder) if f.endswith(file_type)])
     return files
@@ -257,12 +273,6 @@ def decompress_file(file:str):
     Return:
         decompressed_file (str): Path to decompressed file (output file)
     """
-
-    import filetype
-    import zipfile
-    import gzip
-    import shutil
-    from pathlib import Path
 
     # Check Filetype:
     ft = filetype.guess(file)
@@ -314,8 +324,6 @@ def asc_to_tif_add_crs(asc_input:str, prj_txt:str):
     Returns:
         tif_output (tif): path/to/output.tif file
     """
-    import rasterio
-    from rasterio.crs import CRS
 
     # CRS from .prj_file
     with open(prj_file, 'r') as f:
@@ -357,8 +365,6 @@ def delete_raster_files(folder_path:str):
         folder_path (str): Path to folder containing the files.
     """
     
-    from pathlib import Path
-    
     folder = Path(folder_path)
     patterns = ['*.asc', '*.asc.gz', '*.zip']
     deleted_files = 0
@@ -383,11 +389,6 @@ def change_shp_crs(shp_input:str, prj_txt:str):
     Returns:
         shp_output (str): path/to/output.tif file
     """
-    
-    import geopandas as gpd
-    from rasterio.crs import CRS
-    import numpy
-    from pathlib import Path
 
     # CRS from .prj_file
     with open(prj_file, 'r') as f:
@@ -435,9 +436,6 @@ def calculate_zonal_stats(shp:str, tif:str):
         stats (list[dict]): list of dictionarys which contain min, max, mean and count of the raster data for each poly.
     """
 
-    from pprint import pprint
-    from rasterstats import zonal_stats
-
     # Set all_touched to False if you want to include only raster-cells that are completely within the shapefile.
     stats = zonal_stats(shp, tif, all_touched=True)
 
@@ -461,7 +459,6 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
     Returns:
         json_output_path_name (str): path to the created json file conatining rasterstats calculations.
     """
-    from tqdm import tqdm
 
     # Prepare shapefile:
     change_shp_crs(shp_input, prj_file)
@@ -532,7 +529,6 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
     shp_name = path_to_shp.name
     json_output_path_name = shp_name.replace('.shp','')+'_rasterstats.json'
     
-    import json
     with open(json_output_path_name, 'w') as rs_json:
         json.dump(rasterstats_json, rs_json)
 
@@ -543,8 +539,6 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
 
 
 # Create JSON
-
-from pathlib import Path
 
 raster_path = str(Path.cwd() / 'climate_environment_CDC_grids_germany_annual')
 prj_file = 'gk3.prj'
@@ -557,24 +551,14 @@ rasterstats_json = zonal_climate_analysis(shp, raster_path, prj_file) # shp come
 # In[16]:
 
 
-# Import packages
-import os
-import json
-from pprint import pprint
-import matplotlib
-matplotlib.use('Agg')  # Use a non-GUI backend. Prevents "QSocketNotifier: Can only be used with threads started with QThread" message in cmd.
-import matplotlib.pyplot as plt
-import numpy as np
-
 print('\nCreating Plots:')
+matplotlib.use('Agg')  # Use a non-GUI backend. Prevents "QSocketNotifier: Can only be used with threads started with QThread" message in cmd.
 
 
 # In[17]:
 
 
 input_file = rasterstats_json # Created with zonal_climate_analysis(shp_input, raster_folder, prj_file)
-
-import json
 
 # Open rasterstats_dict.json file
 with open(input_file) as json_file:
@@ -637,11 +621,6 @@ def create_map(shapefile:str):
     Adds area and perimeter as tooltips on hover in the html map.
     '''
     
-    import geopandas as gpd
-    import folium
-    from pathlib import Path
-    import numpy as np
-
     shp_path = Path(shapefile)
     gdf = gpd.read_file(shapefile)
     if gdf.crs is None:
