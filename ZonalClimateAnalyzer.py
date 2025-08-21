@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[1]:
 
 
 from pathlib import Path
@@ -10,30 +10,31 @@ import json
 import shutil
 import zipfile
 import gzip
+import filetype
+
+import numpy as np
+
+from tqdm import tqdm
+from pprint import pprint
 
 from urllib.parse import urljoin
 import requests
 from bs4 import BeautifulSoup
 
-from tqdm import tqdm
-from pprint import pprint
-
-import numpy as np
-import matplotlib
-import matplotlib.pyplot as plt
 import folium
-
 import geopandas as gpd
 from pyproj import CRS
 import rasterio
 from rasterio.crs import CRS
 from rasterstats import zonal_stats
-import filetype
+
+import matplotlib
+import matplotlib.pyplot as plt
 
 
 # # Get Shapefile
 
-# In[31]:
+# In[2]:
 
 
 def check_crs(shapefile:str):
@@ -57,7 +58,7 @@ def check_crs(shapefile:str):
         return False
 
 
-# In[32]:
+# In[3]:
 
 
 def get_shp():
@@ -72,6 +73,7 @@ def get_shp():
     while True:  # This function runs until input is valid
         print('\nThis Program lets you analyze the climate history of any area within Germany.')
         print('You only need a shapefile defining the area you want to analyze.')
+        print('The shapefile needs to have exactly one polygon feature and a valid coordinate reference system (CRS) assigned to it.')
         shp_input = input('\nEnter the path to the shapefile: ').strip()
         shp_path = Path(shp_input)
 
@@ -83,7 +85,7 @@ def get_shp():
                 # Check if CRS is defined
                 if gdf.crs:
                     try:
-                        crs = CRS(gdf.crs)
+                        crs = gdf.crs
                         print(f'Valid shapefile with valid CRS found.\n')
                         return shp_path
                     except Exception as e:
@@ -611,7 +613,7 @@ def years_values(parameter_name:str):
     return title, years, values_max, values_mean, values_min
 
 
-# In[38]:
+# In[19]:
 
 
 def create_map(shapefile:str):
@@ -650,7 +652,7 @@ def create_map(shapefile:str):
 create_map(shp)
 
 
-# In[29]:
+# In[20]:
 
 
 def plot_air_temp_min_mean_max():
@@ -721,7 +723,7 @@ def plot_air_temp_min_mean_max():
 plot_air_temp_min_mean_max()
 
 
-# In[30]:
+# In[21]:
 
 
 def plot_frost_ice_days():
@@ -779,7 +781,7 @@ def plot_frost_ice_days():
 plot_frost_ice_days()
 
 
-# In[31]:
+# In[22]:
 
 
 def plot_snowcover_days():
@@ -832,7 +834,7 @@ def plot_snowcover_days():
 plot_snowcover_days()
 
 
-# In[32]:
+# In[23]:
 
 
 def plot_summer_hot_days():
@@ -890,7 +892,7 @@ def plot_summer_hot_days():
 plot_summer_hot_days()
 
 
-# In[33]:
+# In[24]:
 
 
 def plot_precipitaion():
@@ -939,7 +941,7 @@ def plot_precipitaion():
 plot_precipitaion()
 
 
-# In[34]:
+# In[25]:
 
 
 def plot_precipitaion_days():
@@ -1001,7 +1003,7 @@ def plot_precipitaion_days():
 plot_precipitaion_days()
 
 
-# In[35]:
+# In[26]:
 
 
 def plot_sunshine_duration():
@@ -1046,7 +1048,7 @@ def plot_sunshine_duration():
 plot_sunshine_duration()
 
 
-# In[36]:
+# In[27]:
 
 
 def plot_vegetation_begin_end():
@@ -1107,7 +1109,7 @@ def plot_vegetation_begin_end():
 plot_vegetation_begin_end()
 
 
-# In[37]:
+# In[28]:
 
 
 def plot_vegetation_phase_length():
@@ -1166,7 +1168,7 @@ def plot_vegetation_phase_length():
 plot_vegetation_phase_length()
 
 
-# In[38]:
+# In[29]:
 
 
 plot_folder_path = Path.cwd() / 'plots'
