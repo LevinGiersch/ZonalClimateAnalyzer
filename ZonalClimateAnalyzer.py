@@ -885,7 +885,7 @@ def plot_summer_hot_days():
 plot_summer_hot_days()
 
 
-# In[24]:
+# In[41]:
 
 
 def plot_precipitaion():
@@ -903,7 +903,8 @@ def plot_precipitaion():
     values_mean_di = [di*10 for di in values_mean_di]
 
     # Plot
-    ax.bar(years, values_mean_pp, color='blue', label='Niederschlag in mm')
+    ax.plot(years, values_mean_pp, color='blue', label='Niederschlag in mm')
+    ax.fill_between(years, values_mean_pp, color='blue', alpha=0.25)
     ax.plot(yearsdi, values_mean_di, color='orange', label='Trockenheitsindex (mm/°C)')
 
     # Gridlines:
@@ -996,7 +997,7 @@ def plot_precipitaion_days():
 plot_precipitaion_days()
 
 
-# In[26]:
+# In[34]:
 
 
 def plot_sunshine_duration():
@@ -1011,7 +1012,8 @@ def plot_sunshine_duration():
     values_mean_sd = [sd/365 for sd in values_mean_sd]
 
     # Plot
-    ax.bar(years, values_mean_sd, color='orange', label='Durchschnittliche Sonnenstunden pro Tag')
+    ax.plot(years, values_mean_sd, color='orange', label='Durchschnittliche Sonnenstunden pro Tag')
+    ax.fill_between(years, values_mean_sd, color='orange', alpha=0.25)
 
     # Gridlines:
     ax.grid(color='lightgrey', linewidth=0.5)
@@ -1041,7 +1043,7 @@ def plot_sunshine_duration():
 plot_sunshine_duration()
 
 
-# In[27]:
+# In[44]:
 
 
 def plot_vegetation_begin_end():
@@ -1066,10 +1068,12 @@ def plot_vegetation_begin_end():
     # Plot
     ax.plot(years, values_mean_e, color='red', label='Ende der vegetativen Phase')
     ax.plot(years, values_mean_b, color='green', label='Begin der vegetativen Phase')
-    ax.axhline(y=60, color='lightgreen', linestyle='--', label='Frühlingsbeginn')
-    ax.axhline(y=152, color='darkgreen', linestyle='--', label='Sommerbeginn')
-    ax.axhline(y=244, color='orange', linestyle='--', label='Herbstbeginn')
-    ax.axhline(y=335, color='lightblue', linestyle='--', label='Winterbeginn')
+
+    # Marking the beginning of the seasons
+    #ax.axhline(y=335, color='lightblue', linestyle='--', label='Winterbeginn')
+    #ax.axhline(y=244, color='orange', linestyle='--', label='Herbstbeginn')
+    #ax.axhline(y=152, color='darkgreen', linestyle='--', label='Sommerbeginn')
+    #ax.axhline(y=60, color='lightgreen', linestyle='--', label='Frühlingsbeginn')
 
     # Fill between lines
     ax.fill_between(years, values_mean_e, values_mean_b, color='green', alpha=0.25, label='Vegetative Phase')
@@ -1091,6 +1095,16 @@ def plot_vegetation_begin_end():
             label.set_visible(True)
         else:
             label.set_visible(False)
+
+    # Add month ticks on right side
+    ax2 = ax.twinx()
+    month_days = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334]
+    month_labels = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", 
+                    "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"]
+    ax2.set_ylim(ax.get_ylim())
+    ax2.set_yticks(month_days)
+    ax2.set_yticklabels(month_labels)
+    ax2.set_ylabel("Monatsbeginn")
 
     # Save Plot
     plotname = 'vegetativ_phase'+'_plot.png'
