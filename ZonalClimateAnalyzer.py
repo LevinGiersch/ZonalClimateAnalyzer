@@ -70,31 +70,24 @@ def get_shp():
     Returns path to the shapefile if Valid shp and CRS are found.
     '''
 
+    print('\nThis Program lets you analyze the climate history of any area within Germany.')
+    print('You only need a shapefile defining the area you want to analyze.')
+    print('The shapefile needs to have exactly one polygon feature and a valid coordinate reference system (CRS) assigned to it.')
+
     while True:  # This function runs until input is valid
-        print('\nThis Program lets you analyze the climate history of any area within Germany.')
-        print('You only need a shapefile defining the area you want to analyze.')
-        print('The shapefile needs to have exactly one polygon feature and a valid coordinate reference system (CRS) assigned to it.')
         shp_input = input('\nEnter the path to the shapefile: ').strip()
         shp_path = Path(shp_input)
 
         # If the input is a file path
-        if shp_path.is_file() and shp_path.suffix == '.shp':
+        if shp_path.is_file() and shp_path.suffix.lower() == '.shp':
             try:
                 gdf = gpd.read_file(shp_path)
-
-                # Check if CRS is defined
                 if gdf.crs:
-                    try:
-                        crs = gdf.crs
-                        print(f'Valid shapefile with valid CRS found.\n')
-                        return shp_path
-                    except Exception as e:
-                        print(f'Shapefile found, but CRS is invalid: {e}\n')
-                        continue
+                    print('Valid shapefile with valid CRS found.\n')
+                    return shp_path
                 else:
                     print('Shapefile found, but CRS is not defined.\n')
                     continue
-
             except Exception as e:
                 print(f'Error reading shapefile: {e}\n')
                 continue
