@@ -405,7 +405,7 @@ def change_shp_crs(shp_input:str, prj_txt:str):
     shp_folder_path = Path.cwd() / 'shp'
     shp_folder_path.mkdir(parents=True, exist_ok=True)
 
-    # Define Output name
+    # Define output name
     shp_output = str(shp_folder_path / Path(str(shp_input).replace('.shp', '')+'_'+str(target_crs).replace(':','')+'.shp').name)
 
     # Save transformed shp to shp_output
@@ -417,6 +417,39 @@ def change_shp_crs(shp_input:str, prj_txt:str):
 
 
 # In[13]:
+
+
+def dissolve_shp(shp_input:str):
+    """
+    Takes shp_input, dissolve all polygon features into one, outputs as dissolved_shp
+
+    Args:
+        shp_input (str): path to shp file (input file)
+    
+    Returns:
+        shp_output (str): path/to/output.tif file
+    """
+
+    # Read Shapefile
+    gdf = gpd.read_file(shp_input)
+
+    # Dissolve features in gdf
+    gdf_dissolved = gdf.dissolve()
+
+    # Create Output Folder
+    shp_folder_path = Path.cwd() / 'shp'
+    shp_folder_path.mkdir(parents=True, exist_ok=True)
+
+    # Define output name
+    shp_output = str(shp_folder_path / Path(str(shp_input).replace('.shp', '')+'_dissolved'+'.shp').name)
+
+    # Save transformed shp to shp_output
+    gdf_dissolved.to_file(shp_output, encoding='utf-8')
+    
+    return shp_output
+
+
+# In[14]:
 
 
 def calculate_zonal_stats(shp:str, tif:str):
@@ -437,7 +470,7 @@ def calculate_zonal_stats(shp:str, tif:str):
     return stats
 
 
-# In[14]:
+# In[15]:
 
 
 def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
@@ -453,11 +486,13 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
         rasterstats_dict (dict{str:[{}]}): dict containing the name of the raster file as key and the corresponding rasterstats as a list of dicts as values.
     Returns:
         json_output_path_name (str): path to the created json file conatining rasterstats calculations.
+        shp_crs_dissolved (str): path to the dissolved shapefile with transformed crs the rasterstats where calculated on.
     """
 
     # Prepare shapefile:
-    change_shp_crs(shp_input, prj_file)
-
+    shp_crs = change_shp_crs(shp_input, prj_file)
+    shp_crs_dissolved = dissolve_shp(shp_crs)
+    
     # Create list of compessed .asc.gz rasterfiles:
     files_asc_gz = list_of_files(raster_folder, file_type='.asc.gz')
 
@@ -483,9 +518,6 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
     # Create list .tif rasterfiles
     files_tif = list_of_files(raster_folder, file_type='.tif')
 
-    # Shapefile to perform ratserstats calculations on:
-    shapefile = change_shp_crs(shp_input, prj_file)
-
     # Create list containing rasterstats:
     rasterstats_list = []
 
@@ -495,7 +527,7 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
                   desc='',
                   bar_format='{l_bar}{bar:40}| ({n_fmt}/{total_fmt}) Calculating rasterstats.',
                   ncols=120):
-        rasterstats_list.append(calculate_zonal_stats(shapefile, f)) # Append rasterstats to rasterstats_list
+        rasterstats_list.append(calculate_zonal_stats(shp_crs_dissolved, f)) # Append rasterstats to rasterstats_list
 
     # Combine rasterstats and the name of the raster the stats are calculated with
     raster_path = str(Path.cwd() / 'climate_environment_CDC_grids_germany_annual')
@@ -520,17 +552,17 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
     #pprint(rasterstats_json)
 
     # Export dict as json:
-    path_to_shp = Path(shapefile)
+    path_to_shp = Path(shp_crs_dissolved)
     shp_name = path_to_shp.name
     json_output_path_name = shp_name.replace('.shp','')+'_rasterstats.json'
     
     with open(json_output_path_name, 'w') as rs_json:
         json.dump(rasterstats_json, rs_json)
 
-    return json_output_path_name
+    return json_output_path_name, shp_crs_dissolved
 
 
-# In[15]:
+# In[16]:
 
 
 # Create JSON
@@ -538,19 +570,19 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
 raster_path = str(Path.cwd() / 'climate_environment_CDC_grids_germany_annual')
 prj_file = 'gk3.prj'
 
-rasterstats_json = zonal_climate_analysis(shp, raster_path, prj_file) # shp comes from get_shp() in the beginning of this program
+rasterstats_json, shp_crs_dissolved = zonal_climate_analysis(shp, raster_path, prj_file) # shp comes from get_shp() in the beginning of this program
 
 
 # # Visualize
 
-# In[16]:
+# In[17]:
 
 
 print('\nCreating Plots:')
 matplotlib.use('Agg')  # Use a non-GUI backend. Prevents "QSocketNotifier: Can only be used with threads started with QThread" message in cmd.
 
 
-# In[17]:
+# In[18]:
 
 
 input_file = rasterstats_json # Created with zonal_climate_analysis(shp_input, raster_folder, prj_file)
@@ -562,7 +594,7 @@ with open(input_file) as json_file:
 # How to access information: eg. rs['summer_days']['2024'][0]['mean']
 
 
-# In[18]:
+# In[19]:
 
 
 def years_values(parameter_name:str):
@@ -606,7 +638,7 @@ def years_values(parameter_name:str):
     return title, years, values_max, values_mean, values_min
 
 
-# In[19]:
+# In[20]:
 
 
 def create_map(shapefile:str):
@@ -642,10 +674,10 @@ def create_map(shapefile:str):
     m.save(map_path)
     print(f'Successfully created and saved map: {mapname}')
 
-create_map(shp)
+create_map(shp_crs_dissolved)
 
 
-# In[20]:
+# In[21]:
 
 
 def plot_air_temp_min_mean_max():
@@ -716,7 +748,7 @@ def plot_air_temp_min_mean_max():
 plot_air_temp_min_mean_max()
 
 
-# In[21]:
+# In[22]:
 
 
 def plot_frost_ice_days():
@@ -774,7 +806,7 @@ def plot_frost_ice_days():
 plot_frost_ice_days()
 
 
-# In[22]:
+# In[23]:
 
 
 def plot_snowcover_days():
@@ -827,7 +859,7 @@ def plot_snowcover_days():
 plot_snowcover_days()
 
 
-# In[23]:
+# In[24]:
 
 
 def plot_summer_hot_days():
@@ -885,7 +917,7 @@ def plot_summer_hot_days():
 plot_summer_hot_days()
 
 
-# In[41]:
+# In[25]:
 
 
 def plot_precipitaion():
@@ -935,7 +967,7 @@ def plot_precipitaion():
 plot_precipitaion()
 
 
-# In[25]:
+# In[26]:
 
 
 def plot_precipitaion_days():
@@ -997,7 +1029,7 @@ def plot_precipitaion_days():
 plot_precipitaion_days()
 
 
-# In[34]:
+# In[27]:
 
 
 def plot_sunshine_duration():
@@ -1043,7 +1075,7 @@ def plot_sunshine_duration():
 plot_sunshine_duration()
 
 
-# In[44]:
+# In[28]:
 
 
 def plot_vegetation_begin_end():
@@ -1116,7 +1148,7 @@ def plot_vegetation_begin_end():
 plot_vegetation_begin_end()
 
 
-# In[28]:
+# In[29]:
 
 
 def plot_vegetation_phase_length():
@@ -1175,9 +1207,21 @@ def plot_vegetation_phase_length():
 plot_vegetation_phase_length()
 
 
-# In[29]:
+# In[30]:
 
 
 plot_folder_path = Path.cwd() / 'plots'
 print(f'\nFinished! Plots saved here: \n{plot_folder_path}\n')
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
 
