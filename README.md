@@ -62,7 +62,8 @@ python ZonalClimateAnalyzer.py
 | **Spatial grid** | 1 × 1 km **GK3 / DHDN Zone 3** (EPSG 31467) |
 | **Temporal coverage** | 1951 – present (updated yearly) |
 
-A small `gk3.prj` file ships with the repo; shapefiles are re‑projected into this CRS so raster overlays line up exactly.
+- A small `gk3.prj` file ships with the repo; shapefiles are re‑projected into this CRS so raster overlays line up exactly.
+- Detailled informations on the data (as.pdf) can be found inside the 'ZonalClimateAnalyzer/climate_environment_CDC_grids_germany_annual' folder after executing the script.
 
 ---
 
@@ -84,10 +85,8 @@ A small `gk3.prj` file ships with the repo; shapefiles are re‑projected into t
 ---
 
 ## 6 | Known Limitations
-- Only works under **Linux**.
-- Only works for **shapefiles with exactly one polygon feature**.
-- Designed for **Germany‑wide 1 km grids** only.  
-- Memory‑intensive if the shapefile contains *many* polygons.  
+- Only works under **Linux**. Support for Windows may be added in the future.
+- Only works for **shapefiles**. Support for eg. geojson may be added in the future.
 - Re‑downloads rasters each year; archive copies yourself for full reproducibility.  
 
 ---
