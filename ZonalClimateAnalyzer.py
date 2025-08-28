@@ -226,8 +226,6 @@ def download_dwd_data(links:list[str], dest_dir:str, timeout:int=30):
     Returns:
         None
     """
-
-    # TODO: Implement a test if data is already in folder and then skip
     
     dest = Path(dest_dir)
     dest.mkdir(parents=True, exist_ok=True)
