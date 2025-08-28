@@ -73,7 +73,8 @@ def get_shp():
     Returns path to the shapefile if Valid shp and CRS are found.
     '''
 
-    print('\nThis Program lets you analyze the climate history of any area within Germany.')
+    print('\n'+'#'*64)
+    print('This Program lets you analyze the climate history of any area within Germany.')
     print('You only need a shapefile defining the area you want to analyze.')
 
     while True:  # This function runs until input is valid
@@ -1233,5 +1234,6 @@ plot_sunshine_duration()
 plot_vegetation_begin_end()
 plot_vegetation_phase_length()
 
-print(f'\nFinished! Map and plots saved here: \n{Path.cwd() / 'output'}\n')
+print('\nFinished!')
+print(f'Map and plots saved here: \n{Path.cwd() / 'output'}\n')
 
