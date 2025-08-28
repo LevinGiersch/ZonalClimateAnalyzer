@@ -35,9 +35,20 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 
+# In[2]:
+
+
+# Create subfolders
+
+Path('climate_environment_CDC_grids_germany_annual').mkdir(exist_ok=True)
+Path('data_info').mkdir(exist_ok=True)
+Path('output').mkdir(exist_ok=True)
+Path('shp').mkdir(exist_ok=True)
+
+
 # # Get Shapefile
 
-# In[2]:
+# In[3]:
 
 
 def check_crs(shapefile:str):
@@ -61,7 +72,7 @@ def check_crs(shapefile:str):
         return False
 
 
-# In[3]:
+# In[4]:
 
 
 def get_shp():
@@ -74,7 +85,7 @@ def get_shp():
     '''
 
     print('\n'+'#'*64)
-    print('This Program lets you analyze the climate history of any area within Germany.')
+    print('\nThis Program lets you analyze the climate history of any area within Germany.')
     print('You only need a shapefile defining the area you want to analyze.')
 
     while True:  # This function runs until input is valid
@@ -112,7 +123,32 @@ def get_shp():
 
 # # Download Data
 
-# In[4]:
+# In[5]:
+
+
+def check_if_already_downloaded(raster_links:list[str]) -> bool:
+    """
+    Returns True if all raster_links have already been downloaded as .tif files.
+    """
+
+    # Folder where files might be saved
+    folder = Path.cwd() / 'climate_environment_CDC_grids_germany_annual'
+
+    # Return False if folder is empty
+    if not any(folder.iterdir()):
+        return False
+    
+    # List of files in the folder
+    files = [f for f in folder.iterdir() if f.is_file()]
+
+    # Check if every filename (without .tif) occures in any item in the raster_links list
+    for f in files:
+        if not any(f.stem in r for r in raster_links):
+            return False
+    return True
+
+
+# In[6]:
 
 
 def list_of_dwd_data(file_types=['.asc.gz', '.pdf', '.zip']):
@@ -170,12 +206,12 @@ def list_of_dwd_data(file_types=['.asc.gz', '.pdf', '.zip']):
         ]
         links.append(found)
 
-    return list(chain.from_iterable(links))
-        
-    return links
+    links_flattend = list(chain.from_iterable(links))
+
+    return links_flattend
 
 
-# In[5]:
+# In[7]:
 
 
 def download_dwd_data(links:list[str], dest_dir:str, timeout:int=30):
@@ -215,7 +251,7 @@ def download_dwd_data(links:list[str], dest_dir:str, timeout:int=30):
 
 # # Process the Data
 
-# In[6]:
+# In[8]:
 
 
 def list_of_files(folder:str, file_type='.gz'):
@@ -233,7 +269,7 @@ def list_of_files(folder:str, file_type='.gz'):
     return files
 
 
-# In[7]:
+# In[9]:
 
 
 def rename_dwd_file(file:str):
@@ -254,7 +290,7 @@ def rename_dwd_file(file:str):
         return file
 
 
-# In[8]:
+# In[10]:
 
 
 def decompress_file(file:str):
@@ -303,7 +339,7 @@ def decompress_file(file:str):
     return decompressed_file
 
 
-# In[9]:
+# In[11]:
 
 
 def asc_to_tif_add_crs(asc_input:str, prj_txt:str):
@@ -347,7 +383,7 @@ def asc_to_tif_add_crs(asc_input:str, prj_txt:str):
     return tif_output
 
 
-# In[10]:
+# In[12]:
 
 
 def delete_raster_files(folder_path:str):
@@ -368,7 +404,7 @@ def delete_raster_files(folder_path:str):
             deleted_files += 1
 
 
-# In[11]:
+# In[13]:
 
 
 def change_shp_crs(shp_input:str, prj_txt:str):
@@ -414,7 +450,7 @@ def change_shp_crs(shp_input:str, prj_txt:str):
     return shp_output
 
 
-# In[12]:
+# In[14]:
 
 
 def dissolve_shp(shp_input:str):
@@ -447,7 +483,7 @@ def dissolve_shp(shp_input:str):
     return shp_output
 
 
-# In[13]:
+# In[15]:
 
 
 def calculate_zonal_stats(shp:str, tif:str):
@@ -468,7 +504,7 @@ def calculate_zonal_stats(shp:str, tif:str):
     return stats
 
 
-# In[14]:
+# In[16]:
 
 
 def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
@@ -495,21 +531,29 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
     files_asc_gz = list_of_files(raster_folder, file_type='.asc.gz')
 
     # Decompress rasterfiles:
-    for f in tqdm(files_asc_gz,
-                  desc='',
-                  bar_format='{l_bar}{bar:40}| ({n_fmt}/{total_fmt}) Decompressing files.',
-                  ncols=120):
-        decompress_file(f)
+    if check_if_already_downloaded(raster_links) is True:
+        print('\nAll files are already decompressed.')
+        
+    else:
+        for f in tqdm(files_asc_gz,
+                      desc='',
+                      bar_format='{l_bar}{bar:40}| ({n_fmt}/{total_fmt}) Decompressing files.',
+                      ncols=120):
+            decompress_file(f)
 
     # Create list of decompressed .asc rasterfiles:
     files_asc = list_of_files(raster_folder, file_type='.asc')
 
     # Transform decompressed files to tif and add crs:
-    for f in tqdm(files_asc,
-                  desc='',
-                  bar_format='{l_bar}{bar:40}| ({n_fmt}/{total_fmt}) Transforming files to the right format.',
-                  ncols=120):
-        asc_to_tif_add_crs(f, prj_file)
+    if check_if_already_downloaded(raster_links) is True:
+        print('\nAll files are already transformed to the right data format.')
+        
+    else:
+        for f in tqdm(files_asc,
+                      desc='',
+                      bar_format='{l_bar}{bar:40}| ({n_fmt}/{total_fmt}) Transforming files to the right format.',
+                      ncols=120):
+            asc_to_tif_add_crs(f, prj_file)
 
     # Create list .tif rasterfiles
     files_tif = list_of_files(raster_folder, file_type='.tif')
@@ -559,7 +603,7 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
 
 # # Visualize
 
-# In[15]:
+# In[17]:
 
 
 def years_values(parameter_name:str):
@@ -603,7 +647,7 @@ def years_values(parameter_name:str):
     return title, years, values_max, values_mean, values_min
 
 
-# In[16]:
+# In[18]:
 
 
 def create_map(shapefile:str):
@@ -640,7 +684,7 @@ def create_map(shapefile:str):
     print(f'Successfully created and saved map: {mapname}')
 
 
-# In[17]:
+# In[19]:
 
 
 def plot_air_temp_min_mean_max():
@@ -710,7 +754,7 @@ def plot_air_temp_min_mean_max():
     print(f'Successfully created and saved plot: {plotname}')
 
 
-# In[18]:
+# In[20]:
 
 
 def plot_frost_ice_days():
@@ -767,7 +811,7 @@ def plot_frost_ice_days():
     print(f'Successfully created and saved plot: {plotname}')
 
 
-# In[19]:
+# In[21]:
 
 
 def plot_snowcover_days():
@@ -819,7 +863,7 @@ def plot_snowcover_days():
     print(f'Successfully created and saved plot: {plotname}')
 
 
-# In[20]:
+# In[22]:
 
 
 def plot_summer_hot_days():
@@ -876,7 +920,7 @@ def plot_summer_hot_days():
     print(f'Successfully created and saved plot: {plotname}')
 
 
-# In[21]:
+# In[23]:
 
 
 def plot_precipitaion():
@@ -925,7 +969,7 @@ def plot_precipitaion():
     print(f'Successfully created and saved plot: {plotname}')
 
 
-# In[22]:
+# In[24]:
 
 
 def plot_precipitaion_days():
@@ -986,7 +1030,7 @@ def plot_precipitaion_days():
     print(f'Successfully created and saved plot: {plotname}')
 
 
-# In[23]:
+# In[25]:
 
 
 def plot_sunshine_duration():
@@ -1031,7 +1075,7 @@ def plot_sunshine_duration():
     print(f'Successfully created and saved plot: {plotname}')
 
 
-# In[24]:
+# In[26]:
 
 
 def plot_vegetation_begin_end():
@@ -1103,7 +1147,7 @@ def plot_vegetation_begin_end():
     print(f'Successfully created and saved plot: {plotname}')
 
 
-# In[25]:
+# In[27]:
 
 
 def plot_vegetation_phase_length():
@@ -1163,7 +1207,7 @@ def plot_vegetation_phase_length():
 
 # # Run the Program
 
-# In[26]:
+# In[28]:
 
 
 # Get the shapefile to analyze
@@ -1171,36 +1215,40 @@ def plot_vegetation_phase_length():
 shp = get_shp()
 
 
-# In[27]:
+# In[29]:
 
 
 # Download the data
 
-pdf_foldername = 'data_info'
-print(f'\nDownload the PDF files containing informations about the used data:')
 pdf_links = list_of_dwd_data(file_types=['.pdf'])
-download_dwd_data(pdf_links, pdf_foldername)
-
-raster_foldername = 'climate_environment_CDC_grids_germany_annual'
-print(f'\nDownload the Rasterfiles:')
 raster_links = list_of_dwd_data(file_types=['.asc.gz', '.zip'])
-download_dwd_data(raster_links, raster_foldername)
+
+# Download if not already downloaded
+if check_if_already_downloaded(raster_links) is True:
+    print('\nAll files are already downloaded.')
+    
+else:
+    print(f'\nDownload the PDF files containing informations about the used data:')
+    download_dwd_data(pdf_links, 'data_info')
+    
+    print(f'\nDownload the Rasterfiles:')
+    download_dwd_data(raster_links, 'climate_environment_CDC_grids_germany_annual')
 
 
-# In[28]:
+# In[30]:
 
 
-# Create JSON
+# Process the Data
 
 print('\nProcess the Data:')
 
-raster_path = str(Path.cwd() / raster_foldername)
+raster_path = str(Path.cwd() / 'climate_environment_CDC_grids_germany_annual')
 prj_file = 'gk3.prj'
 
-rasterstats_json, shp_crs_dissolved = zonal_climate_analysis(shp, raster_path, prj_file) # shp comes from get_shp() in the beginning of this program
+rasterstats_json, shp_crs_dissolved = zonal_climate_analysis(shp, raster_path, prj_file)
 
 
-# In[29]:
+# In[31]:
 
 
 # Load Rasterstats JSON
@@ -1212,7 +1260,7 @@ with open(input_file) as json_file:
     rs = json.load(json_file)
 
 
-# In[30]:
+# In[32]:
 
 
 # Create Maps and Plots
@@ -1235,5 +1283,5 @@ plot_vegetation_begin_end()
 plot_vegetation_phase_length()
 
 print('\nFinished!')
-print(f'Map and plots saved here: \n{Path.cwd() / 'output'}\n')
+print(f'Map and plots are saved here: \n{Path.cwd() / 'output'}\n')
 
