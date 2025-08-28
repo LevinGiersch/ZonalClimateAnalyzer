@@ -648,7 +648,7 @@ def years_values(parameter_name:str):
 # In[18]:
 
 
-def create_map(shapefile:str):
+def create_map(shapefile:str, shp_name:str):
     '''
     Takes path to shapefile as string as input.
     Creates interactive map as html.
@@ -674,7 +674,7 @@ def create_map(shapefile:str):
     )
     
     # Save Map
-    mapname = 'map.html'
+    mapname = shp_name+'_'+'map.html'
     map_folder_path = Path.cwd() / 'output'
     map_folder_path.mkdir(parents=True, exist_ok=True)
     map_path = str(map_folder_path / mapname)
@@ -685,7 +685,7 @@ def create_map(shapefile:str):
 # In[19]:
 
 
-def plot_air_temp_min_mean_max():
+def plot_air_temp_min_mean_max(shp_name:str):
     # Air Temp min mean max
     plt.close()
 
@@ -744,7 +744,7 @@ def plot_air_temp_min_mean_max():
             label.set_visible(False)
 
     # Save Plot
-    plotname = 'min_mean_max_temp'+'_plot.png'
+    plotname = shp_name+'_'+'min_mean_max_temp'+'_plot.png'
     plot_folder_path = Path.cwd() / 'output'
     plot_folder_path.mkdir(parents=True, exist_ok=True)
     plot_path = str(plot_folder_path / plotname)
@@ -755,7 +755,7 @@ def plot_air_temp_min_mean_max():
 # In[20]:
 
 
-def plot_frost_ice_days():
+def plot_frost_ice_days(shp_name:str):
     # Frost and Ice Days
     plt.close()
 
@@ -801,7 +801,7 @@ def plot_frost_ice_days():
             label.set_visible(False)
 
     # Save Plot
-    plotname = 'ice_frost_days'+'_plot.png'
+    plotname = shp_name+'_'+'ice_frost_days'+'_plot.png'
     plot_folder_path = Path.cwd() / 'output'
     plot_folder_path.mkdir(parents=True, exist_ok=True)
     plot_path = str(plot_folder_path / plotname)
@@ -812,7 +812,7 @@ def plot_frost_ice_days():
 # In[21]:
 
 
-def plot_snowcover_days():
+def plot_snowcover_days(shp_name:str):
     # Snowcover Days
     plt.close()
 
@@ -853,7 +853,7 @@ def plot_snowcover_days():
             label.set_visible(False)
 
     # Save Plot
-    plotname = 'snowcover_days'+'_plot.png'
+    plotname = shp_name+'_'+'snowcover_days'+'_plot.png'
     plot_folder_path = Path.cwd() / 'output'
     plot_folder_path.mkdir(parents=True, exist_ok=True)
     plot_path = str(plot_folder_path / plotname)
@@ -864,7 +864,7 @@ def plot_snowcover_days():
 # In[22]:
 
 
-def plot_summer_hot_days():
+def plot_summer_hot_days(shp_name:str):
     # Summer and Hot Days
     plt.close()
 
@@ -910,7 +910,7 @@ def plot_summer_hot_days():
             label.set_visible(False)
 
     # Save Plot
-    plotname = 'summer_hot_days'+'_plot.png'
+    plotname = shp_name+'_'+'summer_hot_days'+'_plot.png'
     plot_folder_path = Path.cwd() / 'output'
     plot_folder_path.mkdir(parents=True, exist_ok=True)
     plot_path = str(plot_folder_path / plotname)
@@ -921,7 +921,7 @@ def plot_summer_hot_days():
 # In[23]:
 
 
-def plot_precipitaion():
+def plot_precipitaion(shp_name:str):
     # Precipitation
     plt.close()
 
@@ -959,7 +959,7 @@ def plot_precipitaion():
             label.set_visible(False)
 
     # Save Plot
-    plotname = 'precipitation_drought'+'_plot.png'
+    plotname = shp_name+'_'+'precipitation_drought'+'_plot.png'
     plot_folder_path = Path.cwd() / 'output'
     plot_folder_path.mkdir(parents=True, exist_ok=True)
     plot_path = str(plot_folder_path / plotname)
@@ -970,7 +970,7 @@ def plot_precipitaion():
 # In[24]:
 
 
-def plot_precipitaion_days():
+def plot_precipitaion_days(shp_name:str):
     # Precipitation Days
     plt.close()
 
@@ -1020,7 +1020,7 @@ def plot_precipitaion_days():
             label.set_visible(False)
 
     # Save Plot
-    plotname = 'precip_days'+'_plot.png'
+    plotname = shp_name+'_'+'precip_days'+'_plot.png'
     plot_folder_path = Path.cwd() / 'output'
     plot_folder_path.mkdir(parents=True, exist_ok=True)
     plot_path = str(plot_folder_path / plotname)
@@ -1031,7 +1031,7 @@ def plot_precipitaion_days():
 # In[25]:
 
 
-def plot_sunshine_duration():
+def plot_sunshine_duration(shp_name:str):
     # Sunshine Duration
     plt.close()
 
@@ -1065,7 +1065,7 @@ def plot_sunshine_duration():
             label.set_visible(False)
 
     # Save Plot
-    plotname = 'sunshine_duration'+'_plot.png'
+    plotname = shp_name+'_'+'sunshine_duration'+'_plot.png'
     plot_folder_path = Path.cwd() / 'output'
     plot_folder_path.mkdir(parents=True, exist_ok=True)
     plot_path = str(plot_folder_path / plotname)
@@ -1076,7 +1076,7 @@ def plot_sunshine_duration():
 # In[26]:
 
 
-def plot_vegetation_begin_end():
+def plot_vegetation_begin_end(shp_name:str):
     # Vegetation begin and vegetation end
     plt.close()
 
@@ -1137,7 +1137,7 @@ def plot_vegetation_begin_end():
     ax2.set_ylabel("Monatsbeginn")
 
     # Save Plot
-    plotname = 'vegetativ_phase'+'_plot.png'
+    plotname = shp_name+'_'+'vegetativ_phase'+'_plot.png'
     plot_folder_path = Path.cwd() / 'output'
     plot_folder_path.mkdir(parents=True, exist_ok=True)
     plot_path = str(plot_folder_path / plotname)
@@ -1148,7 +1148,7 @@ def plot_vegetation_begin_end():
 # In[27]:
 
 
-def plot_vegetation_phase_length():
+def plot_vegetation_phase_length(shp_name:str):
     # Vegetation phase length
     plt.close()
 
@@ -1195,7 +1195,7 @@ def plot_vegetation_phase_length():
             label.set_visible(False)
 
     # Save Plot
-    plotname = 'vegetativ_phase_len'+'_plot.png'
+    plotname = shp_name+'_'+'vegetativ_phase_len'+'_plot.png'
     plot_folder_path = Path.cwd() / 'output'
     plot_folder_path.mkdir(parents=True, exist_ok=True)
     plot_path = str(plot_folder_path / plotname)
@@ -1266,19 +1266,22 @@ with open(input_file) as json_file:
 print('\nCreating Map and Plots:')
 matplotlib.use('Agg')  # Use a non-GUI backend. Prevents "QSocketNotifier: Can only be used with threads started with QThread" message in cmd.
 
+
+shp_name = shp.stem
+
 # Create Map
-create_map(shp_crs_dissolved)
+create_map(shp_crs_dissolved, shp_name)
 
 # Create Plots
-plot_air_temp_min_mean_max()
-plot_frost_ice_days()
-plot_snowcover_days()
-plot_summer_hot_days()
-plot_precipitaion()
-plot_precipitaion_days()
-plot_sunshine_duration()
-plot_vegetation_begin_end()
-plot_vegetation_phase_length()
+plot_air_temp_min_mean_max(shp_name)
+plot_frost_ice_days(shp_name)
+plot_snowcover_days(shp_name)
+plot_summer_hot_days(shp_name)
+plot_precipitaion(shp_name)
+plot_precipitaion_days(shp_name)
+plot_sunshine_duration(shp_name)
+plot_vegetation_begin_end(shp_name)
+plot_vegetation_phase_length(shp_name)
 
 print('\nFinished!')
 print(f'Map and plots are saved here: \n{Path.cwd() / 'output'}\n')
