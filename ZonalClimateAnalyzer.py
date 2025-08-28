@@ -502,7 +502,7 @@ def calculate_zonal_stats(shp:str, tif:str):
     return stats
 
 
-# In[16]:
+# In[1]:
 
 
 def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
@@ -527,31 +527,31 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
     
     # Create list of compessed .asc.gz rasterfiles:
     files_asc_gz = list_of_files(raster_folder, file_type='.asc.gz')
-
-    # Decompress rasterfiles:
-    if check_if_already_downloaded(raster_links) is True:
-        print('\nAll files are already decompressed.')
-        
-    else:
+    
+    if len(files_asc_gz) != 0:
+        # Decompress rasterfiles:
         for f in tqdm(files_asc_gz,
                       desc='',
                       bar_format='{l_bar}{bar:40}| ({n_fmt}/{total_fmt}) Decompressing files.',
                       ncols=120):
             decompress_file(f)
+        print('Decompressed files!')
+    else:
+        print('Files are already decompressed.')
 
     # Create list of decompressed .asc rasterfiles:
     files_asc = list_of_files(raster_folder, file_type='.asc')
 
-    # Transform decompressed files to tif and add crs:
-    if check_if_already_downloaded(raster_links) is True:
-        print('\nAll files are already transformed to the right data format.')
-        
-    else:
+    if len(files_asc) != 0:
+        # Transform decompressed files to tif and add crs:
         for f in tqdm(files_asc,
                       desc='',
                       bar_format='{l_bar}{bar:40}| ({n_fmt}/{total_fmt}) Transforming files to the right format.',
                       ncols=120):
             asc_to_tif_add_crs(f, prj_file)
+        print('Transformed files to the right format!')
+    else:
+        print('Files are already transformed to the right format.')
 
     # Create list .tif rasterfiles
     files_tif = list_of_files(raster_folder, file_type='.tif')
@@ -648,7 +648,7 @@ def years_values(parameter_name:str):
 # In[18]:
 
 
-def create_map(shapefile:str, shp_name:str):
+def create_map(shapefile:str):
     '''
     Takes path to shapefile as string as input.
     Creates interactive map as html.
@@ -685,7 +685,7 @@ def create_map(shapefile:str, shp_name:str):
 # In[19]:
 
 
-def plot_air_temp_min_mean_max(shp_name:str):
+def plot_air_temp_min_mean_max():
     # Air Temp min mean max
     plt.close()
 
@@ -755,7 +755,7 @@ def plot_air_temp_min_mean_max(shp_name:str):
 # In[20]:
 
 
-def plot_frost_ice_days(shp_name:str):
+def plot_frost_ice_days():
     # Frost and Ice Days
     plt.close()
 
@@ -812,7 +812,7 @@ def plot_frost_ice_days(shp_name:str):
 # In[21]:
 
 
-def plot_snowcover_days(shp_name:str):
+def plot_snowcover_days():
     # Snowcover Days
     plt.close()
 
@@ -864,7 +864,7 @@ def plot_snowcover_days(shp_name:str):
 # In[22]:
 
 
-def plot_summer_hot_days(shp_name:str):
+def plot_summer_hot_days():
     # Summer and Hot Days
     plt.close()
 
@@ -921,7 +921,7 @@ def plot_summer_hot_days(shp_name:str):
 # In[23]:
 
 
-def plot_precipitaion(shp_name:str):
+def plot_precipitaion():
     # Precipitation
     plt.close()
 
@@ -970,7 +970,7 @@ def plot_precipitaion(shp_name:str):
 # In[24]:
 
 
-def plot_precipitaion_days(shp_name:str):
+def plot_precipitaion_days():
     # Precipitation Days
     plt.close()
 
@@ -1031,7 +1031,7 @@ def plot_precipitaion_days(shp_name:str):
 # In[25]:
 
 
-def plot_sunshine_duration(shp_name:str):
+def plot_sunshine_duration():
     # Sunshine Duration
     plt.close()
 
@@ -1076,7 +1076,7 @@ def plot_sunshine_duration(shp_name:str):
 # In[26]:
 
 
-def plot_vegetation_begin_end(shp_name:str):
+def plot_vegetation_begin_end():
     # Vegetation begin and vegetation end
     plt.close()
 
@@ -1148,7 +1148,7 @@ def plot_vegetation_begin_end(shp_name:str):
 # In[27]:
 
 
-def plot_vegetation_phase_length(shp_name:str):
+def plot_vegetation_phase_length():
     # Vegetation phase length
     plt.close()
 
@@ -1270,18 +1270,18 @@ matplotlib.use('Agg')  # Use a non-GUI backend. Prevents "QSocketNotifier: Can o
 shp_name = shp.stem
 
 # Create Map
-create_map(shp_crs_dissolved, shp_name)
+create_map(shp_crs_dissolved)
 
 # Create Plots
-plot_air_temp_min_mean_max(shp_name)
-plot_frost_ice_days(shp_name)
-plot_snowcover_days(shp_name)
-plot_summer_hot_days(shp_name)
-plot_precipitaion(shp_name)
-plot_precipitaion_days(shp_name)
-plot_sunshine_duration(shp_name)
-plot_vegetation_begin_end(shp_name)
-plot_vegetation_phase_length(shp_name)
+plot_air_temp_min_mean_max()
+plot_frost_ice_days()
+plot_snowcover_days()
+plot_summer_hot_days()
+plot_precipitaion()
+plot_precipitaion_days()
+plot_sunshine_duration()
+plot_vegetation_begin_end()
+plot_vegetation_phase_length()
 
 print('\nFinished!')
 print(f'Map and plots are saved here: \n{Path.cwd() / 'output'}\n')
