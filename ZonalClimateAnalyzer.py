@@ -4,6 +4,8 @@
 # In[1]:
 
 
+# Import Packages
+
 from pathlib import Path
 import os
 import json
@@ -16,8 +18,9 @@ import numpy as np
 
 from tqdm import tqdm
 from pprint import pprint
+from itertools import chain
 
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 
@@ -51,10 +54,10 @@ def check_crs(shapefile:str):
     # Check if CRS is defined
     valid_crs = gdf.crs
     if valid_crs:
-        print("CRS is defined:", gdf.crs)
+        print("\nCRS is defined:", gdf.crs)
         return True
     else:
-        print("CRS is NOT defined.")
+        print("\nCRS is NOT defined.")
         return False
 
 
@@ -72,10 +75,9 @@ def get_shp():
 
     print('\nThis Program lets you analyze the climate history of any area within Germany.')
     print('You only need a shapefile defining the area you want to analyze.')
-    print('The shapefile needs to have exactly one polygon feature and a valid coordinate reference system (CRS) assigned to it.')
 
     while True:  # This function runs until input is valid
-        shp_input = input('\nEnter the path to the shapefile: ').strip()
+        shp_input = input('\nEnter the path to the shapefile here: ').strip()
         shp_path = Path(shp_input)
 
         # If the input is a file path
@@ -83,10 +85,10 @@ def get_shp():
             try:
                 gdf = gpd.read_file(shp_path)
                 if gdf.crs:
-                    print('Valid shapefile with valid CRS found.\n')
+                    print('\nValid shapefile with valid CRS found.\n')
                     return shp_path
                 else:
-                    print('Shapefile found, but CRS is not defined.\n')
+                    print('\nShapefile found, but CRS is not defined.\n')
                     continue
             except Exception as e:
                 print(f'Error reading shapefile: {e}\n')
@@ -99,14 +101,12 @@ def get_shp():
                 print(f'Found shapefiles: {[f.name for f in shp_files]}. \nPlease append the filename to the path and try again.\n')
                 continue
             else:
-                print('No shapefile found in the folder.')
+                print('\nNo shapefile found in the folder.')
                 continue
 
         else:
-            print('Invalid path or not a shapefile.')
+            print('\nInvalid path or not a shapefile.')
             continue
-
-shp = get_shp()
 
 
 # # Download Data
@@ -114,110 +114,107 @@ shp = get_shp()
 # In[4]:
 
 
-def download_dwd_data(folder: str, base_url: str, file_types=['.asc.gz', '.pdf', '.zip']):
+def list_of_dwd_data(file_types=['.asc.gz', '.pdf', '.zip']):
     '''
-    Downloads all .asc.gz files from the base_url into the folder.
-    If the folder does not exist, it will automatically be created.
+    Creates a list containing all dwd files to download.
 
     Parameters:
-        folder: string, path in filesystem including target folder
-        base_url: string, full url to dwd https://opendata.dwd.de/climate_environment/CDC/grids_germany/annual/vegetation_end/
         file_types: string, ending that correspondes to the filetype that we want to download
 
-    Example: download_dwd_data('/home/user/Documents/Folder', 'https://opendata.dwd.de/climate_environment/CDC/grids_germany/annual/vegetation_end/', '.pdf')
+    Returns:
+        links: list containing links to all files to download
     '''
 
-    # TODO: Implement a test if data is already in folder and then skip
+    # Get list of all download locations containing the data to download:
+    base_download_location = 'https://opendata.dwd.de/climate_environment/CDC/grids_germany/annual/'
+    folder_download_locations = [
+        'air_temperature_max/',
+        'air_temperature_mean/',
+        'air_temperature_min/',
+        'drought_index/',
+        #'erosivity/',
+        'frost_days/',
+        'hot_days/', 
+        'ice_days/',
+        'phenology/',
+        'precipGE10mm_days/',
+        'precipGE20mm_days/',
+        'precipGE30mm_days/',
+        'precipitation/',
+        #'radiation_diffuse/',
+        #'radiation_direct/',
+        #'radiation_global/',
+        'snowcover_days/',
+        'summer_days/',
+        'sunshine_duration/',
+        'vegetation_begin/',
+        'vegetation_end/'
+    ]
+    download_locations = [base_download_location+f for f in folder_download_locations]
 
-    # Create folder if it doesn't exist yet
-    os.makedirs(folder, exist_ok=True)
+    # Create a list containing all links
+    links = []
+    for location in download_locations:
+        response = requests.get(location)
+        if response.status_code != 200:
+            raise Exception(f'\nFailed to retrieve the webpage: {location}')
 
-    # Retrieve webpage content
-    response = requests.get(base_url)
-    if response.status_code != 200:
-        raise Exception(f'Failed to retrieve the webpage: {base_url}')
+        soup = BeautifulSoup(response.text, 'html.parser')
 
-    # Parse HTML content
-    soup = BeautifulSoup(response.text, 'html.parser')
+        # Build absolute URLs
+        found = [
+            location + a['href']
+            for a in soup.find_all('a', href=True)
+            if a['href'].endswith(tuple(file_types))
+        ]
+        links.append(found)
 
-    # Find all relevant links
-    links = [a['href'] for a in soup.find_all('a', href=True) if a['href'].endswith(tuple(file_types))] # tuple because .endswith does not accept lists
-
-    if not links:
-        print('No matching files found to download.')
-        return
-
-    # Download each file
-    for link in links:
-        file_url = urljoin(base_url, link)
-        file_path = os.path.join(folder, os.path.basename(link))
-        #print(f'Downloading: {file_url}')
-
-        with requests.get(file_url, stream=True) as file_response:
-            if file_response.status_code == 200:
-                with open(file_path, 'wb') as file:
-                    for chunk in file_response.iter_content(chunk_size=8192):
-                        if chunk:
-                            file.write(chunk)
-            else:
-                print(f'Failed to download: {file_url}, status code: {file_response.status_code}')
+    return list(chain.from_iterable(links))
+        
+    return links
 
 
 # In[5]:
 
 
-# Get list of all download locations containing the data to download:
+def download_dwd_data(links:list[str], dest_dir:str, timeout:int=30):
+    """
+    Download files from a list of full URLs into a target directory.
 
-base_download_location = 'https://opendata.dwd.de/climate_environment/CDC/grids_germany/annual/'
+    Parameters:
+        links (list[str]): List of full download URLs.
+        dest_dir (str or Path): Local directory where the files will be saved.
+        timeout (int, optional): Maximum number of seconds to wait for a server response. Defaults to 30.
 
-folder_download_locations = [
-    'air_temperature_max/',
-    'air_temperature_mean/',
-    'air_temperature_min/',
-    'drought_index/',
-    #'erosivity/',
-    'frost_days/',
-    'hot_days/', 
-    'ice_days/',
-    'phenology/',
-    'precipGE10mm_days/',
-    'precipGE20mm_days/',
-    'precipGE30mm_days/',
-    'precipitation/',
-    #'radiation_diffuse/',
-    #'radiation_direct/',
-    #'radiation_global/',
-    'snowcover_days/',
-    'summer_days/',
-    'sunshine_duration/',
-    'vegetation_begin/',
-    'vegetation_end/'
-]
+    Returns:
+        None
+    """
 
-download_locations = [base_download_location+f for f in folder_download_locations]
+    # TODO: Implement a test if data is already in folder and then skip
+    
+    dest = Path(dest_dir)
+    dest.mkdir(parents=True, exist_ok=True)
 
+    for file_url in tqdm(links,
+                     desc='',
+                     bar_format='{l_bar}{bar:40}| ({n_fmt}/{total_fmt}) Downloading files. This may take a few minutes.',
+                     ncols=120):
+        filename = Path(urlparse(file_url).path).name
+        file_path = dest / filename
+
+        with requests.get(file_url, stream=True, timeout=timeout) as r:
+            if r.status_code != 200:
+                print(f'\nFehler {r.status_code}: {file_url}')
+                continue
+            with file_path.open('wb') as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+
+
+# # Process the Data
 
 # In[6]:
-
-
-# Download the data
-
-# Create folder
-raster_path = Path.cwd() / 'climate_environment_CDC_grids_germany_annual'
-raster_path.mkdir(parents=True, exist_ok=True)
-target_folder = raster_path
-
-# Download data
-for location in tqdm(download_locations,
-                     desc='',
-                     bar_format='{l_bar}{bar:40}| ({n_fmt}/{total_fmt}) Downloading Rasterfiles. This may take a few minutes.',
-                     ncols=120):
-    download_dwd_data(target_folder, location, file_types=['.asc.gz', '.pdf', '.zip'])
-
-
-# # MAIN
-
-# In[7]:
 
 
 def list_of_files(folder:str, file_type='.gz'):
@@ -235,7 +232,7 @@ def list_of_files(folder:str, file_type='.gz'):
     return files
 
 
-# In[8]:
+# In[7]:
 
 
 def rename_dwd_file(file:str):
@@ -256,7 +253,7 @@ def rename_dwd_file(file:str):
         return file
 
 
-# In[9]:
+# In[8]:
 
 
 def decompress_file(file:str):
@@ -305,7 +302,7 @@ def decompress_file(file:str):
     return decompressed_file
 
 
-# In[10]:
+# In[9]:
 
 
 def asc_to_tif_add_crs(asc_input:str, prj_txt:str):
@@ -349,7 +346,7 @@ def asc_to_tif_add_crs(asc_input:str, prj_txt:str):
     return tif_output
 
 
-# In[11]:
+# In[10]:
 
 
 def delete_raster_files(folder_path:str):
@@ -370,7 +367,7 @@ def delete_raster_files(folder_path:str):
             deleted_files += 1
 
 
-# In[12]:
+# In[11]:
 
 
 def change_shp_crs(shp_input:str, prj_txt:str):
@@ -416,7 +413,7 @@ def change_shp_crs(shp_input:str, prj_txt:str):
     return shp_output
 
 
-# In[13]:
+# In[12]:
 
 
 def dissolve_shp(shp_input:str):
@@ -449,7 +446,7 @@ def dissolve_shp(shp_input:str):
     return shp_output
 
 
-# In[14]:
+# In[13]:
 
 
 def calculate_zonal_stats(shp:str, tif:str):
@@ -470,7 +467,7 @@ def calculate_zonal_stats(shp:str, tif:str):
     return stats
 
 
-# In[15]:
+# In[14]:
 
 
 def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
@@ -497,7 +494,6 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
     files_asc_gz = list_of_files(raster_folder, file_type='.asc.gz')
 
     # Decompress rasterfiles:
-    print()
     for f in tqdm(files_asc_gz,
                   desc='',
                   bar_format='{l_bar}{bar:40}| ({n_fmt}/{total_fmt}) Decompressing files.',
@@ -508,7 +504,6 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
     files_asc = list_of_files(raster_folder, file_type='.asc')
 
     # Transform decompressed files to tif and add crs:
-    print()
     for f in tqdm(files_asc,
                   desc='',
                   bar_format='{l_bar}{bar:40}| ({n_fmt}/{total_fmt}) Transforming files to the right format.',
@@ -522,7 +517,6 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
     rasterstats_list = []
 
     # Iterate over files_tif and perform rasterstats calculations on each rasterfile and the shapefile:
-    print()
     for f in tqdm(files_tif,
                   desc='',
                   bar_format='{l_bar}{bar:40}| ({n_fmt}/{total_fmt}) Calculating rasterstats.',
@@ -562,39 +556,9 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
     return json_output_path_name, shp_crs_dissolved
 
 
-# In[16]:
-
-
-# Create JSON
-
-raster_path = str(Path.cwd() / 'climate_environment_CDC_grids_germany_annual')
-prj_file = 'gk3.prj'
-
-rasterstats_json, shp_crs_dissolved = zonal_climate_analysis(shp, raster_path, prj_file) # shp comes from get_shp() in the beginning of this program
-
-
 # # Visualize
 
-# In[17]:
-
-
-print('\nCreating Plots:')
-matplotlib.use('Agg')  # Use a non-GUI backend. Prevents "QSocketNotifier: Can only be used with threads started with QThread" message in cmd.
-
-
-# In[18]:
-
-
-input_file = rasterstats_json # Created with zonal_climate_analysis(shp_input, raster_folder, prj_file)
-
-# Open rasterstats_dict.json file
-with open(input_file) as json_file:
-    rs = json.load(json_file)
-
-# How to access information: eg. rs['summer_days']['2024'][0]['mean']
-
-
-# In[19]:
+# In[15]:
 
 
 def years_values(parameter_name:str):
@@ -638,7 +602,7 @@ def years_values(parameter_name:str):
     return title, years, values_max, values_mean, values_min
 
 
-# In[20]:
+# In[16]:
 
 
 def create_map(shapefile:str):
@@ -668,16 +632,14 @@ def create_map(shapefile:str):
     
     # Save Map
     mapname = 'map.html'
-    map_folder_path = Path.cwd() / 'plots'
+    map_folder_path = Path.cwd() / 'output'
     map_folder_path.mkdir(parents=True, exist_ok=True)
     map_path = str(map_folder_path / mapname)
     m.save(map_path)
     print(f'Successfully created and saved map: {mapname}')
 
-create_map(shp_crs_dissolved)
 
-
-# In[21]:
+# In[17]:
 
 
 def plot_air_temp_min_mean_max():
@@ -740,15 +702,14 @@ def plot_air_temp_min_mean_max():
 
     # Save Plot
     plotname = 'min_mean_max_temp'+'_plot.png'
-    plot_folder_path = Path.cwd() / 'plots'
+    plot_folder_path = Path.cwd() / 'output'
     plot_folder_path.mkdir(parents=True, exist_ok=True)
     plot_path = str(plot_folder_path / plotname)
     plt.savefig(plot_path, bbox_inches='tight', dpi=300)
     print(f'Successfully created and saved plot: {plotname}')
-plot_air_temp_min_mean_max()
 
 
-# In[22]:
+# In[18]:
 
 
 def plot_frost_ice_days():
@@ -798,15 +759,14 @@ def plot_frost_ice_days():
 
     # Save Plot
     plotname = 'ice_frost_days'+'_plot.png'
-    plot_folder_path = Path.cwd() / 'plots'
+    plot_folder_path = Path.cwd() / 'output'
     plot_folder_path.mkdir(parents=True, exist_ok=True)
     plot_path = str(plot_folder_path / plotname)
     plt.savefig(plot_path, bbox_inches='tight', dpi=300)
     print(f'Successfully created and saved plot: {plotname}')
-plot_frost_ice_days()
 
 
-# In[23]:
+# In[19]:
 
 
 def plot_snowcover_days():
@@ -851,15 +811,14 @@ def plot_snowcover_days():
 
     # Save Plot
     plotname = 'snowcover_days'+'_plot.png'
-    plot_folder_path = Path.cwd() / 'plots'
+    plot_folder_path = Path.cwd() / 'output'
     plot_folder_path.mkdir(parents=True, exist_ok=True)
     plot_path = str(plot_folder_path / plotname)
     plt.savefig(plot_path, bbox_inches='tight', dpi=300)
     print(f'Successfully created and saved plot: {plotname}')
-plot_snowcover_days()
 
 
-# In[24]:
+# In[20]:
 
 
 def plot_summer_hot_days():
@@ -909,15 +868,14 @@ def plot_summer_hot_days():
 
     # Save Plot
     plotname = 'summer_hot_days'+'_plot.png'
-    plot_folder_path = Path.cwd() / 'plots'
+    plot_folder_path = Path.cwd() / 'output'
     plot_folder_path.mkdir(parents=True, exist_ok=True)
     plot_path = str(plot_folder_path / plotname)
     plt.savefig(plot_path, bbox_inches='tight', dpi=300)
     print(f'Successfully created and saved plot: {plotname}')
-plot_summer_hot_days()
 
 
-# In[25]:
+# In[21]:
 
 
 def plot_precipitaion():
@@ -959,15 +917,14 @@ def plot_precipitaion():
 
     # Save Plot
     plotname = 'precipitation_drought'+'_plot.png'
-    plot_folder_path = Path.cwd() / 'plots'
+    plot_folder_path = Path.cwd() / 'output'
     plot_folder_path.mkdir(parents=True, exist_ok=True)
     plot_path = str(plot_folder_path / plotname)
     plt.savefig(plot_path, bbox_inches='tight', dpi=300)
     print(f'Successfully created and saved plot: {plotname}')
-plot_precipitaion()
 
 
-# In[26]:
+# In[22]:
 
 
 def plot_precipitaion_days():
@@ -1021,15 +978,14 @@ def plot_precipitaion_days():
 
     # Save Plot
     plotname = 'precip_days'+'_plot.png'
-    plot_folder_path = Path.cwd() / 'plots'
+    plot_folder_path = Path.cwd() / 'output'
     plot_folder_path.mkdir(parents=True, exist_ok=True)
     plot_path = str(plot_folder_path / plotname)
     plt.savefig(plot_path, bbox_inches='tight', dpi=300)
     print(f'Successfully created and saved plot: {plotname}')
-plot_precipitaion_days()
 
 
-# In[27]:
+# In[23]:
 
 
 def plot_sunshine_duration():
@@ -1067,15 +1023,14 @@ def plot_sunshine_duration():
 
     # Save Plot
     plotname = 'sunshine_duration'+'_plot.png'
-    plot_folder_path = Path.cwd() / 'plots'
+    plot_folder_path = Path.cwd() / 'output'
     plot_folder_path.mkdir(parents=True, exist_ok=True)
     plot_path = str(plot_folder_path / plotname)
     plt.savefig(plot_path, bbox_inches='tight', dpi=300)
     print(f'Successfully created and saved plot: {plotname}')
-plot_sunshine_duration()
 
 
-# In[28]:
+# In[24]:
 
 
 def plot_vegetation_begin_end():
@@ -1140,15 +1095,14 @@ def plot_vegetation_begin_end():
 
     # Save Plot
     plotname = 'vegetativ_phase'+'_plot.png'
-    plot_folder_path = Path.cwd() / 'plots'
+    plot_folder_path = Path.cwd() / 'output'
     plot_folder_path.mkdir(parents=True, exist_ok=True)
     plot_path = str(plot_folder_path / plotname)
     plt.savefig(plot_path, bbox_inches='tight', dpi=300)
     print(f'Successfully created and saved plot: {plotname}')
-plot_vegetation_begin_end()
 
 
-# In[29]:
+# In[25]:
 
 
 def plot_vegetation_phase_length():
@@ -1199,29 +1153,85 @@ def plot_vegetation_phase_length():
 
     # Save Plot
     plotname = 'vegetativ_phase_len'+'_plot.png'
-    plot_folder_path = Path.cwd() / 'plots'
+    plot_folder_path = Path.cwd() / 'output'
     plot_folder_path.mkdir(parents=True, exist_ok=True)
     plot_path = str(plot_folder_path / plotname)
     plt.savefig(plot_path, bbox_inches='tight', dpi=300)
     print(f'Successfully created and saved plot: {plotname}')
-plot_vegetation_phase_length()
+
+
+# # Run the Program
+
+# In[26]:
+
+
+# Get the shapefile to analyze
+
+shp = get_shp()
+
+
+# In[27]:
+
+
+# Download the data
+
+pdf_foldername = 'data_info'
+print(f'\nDownload the PDF files containing informations about the used data:')
+pdf_links = list_of_dwd_data(file_types=['.pdf'])
+download_dwd_data(pdf_links, pdf_foldername)
+
+raster_foldername = 'climate_environment_CDC_grids_germany_annual'
+print(f'\nDownload the Rasterfiles:')
+raster_links = list_of_dwd_data(file_types=['.asc.gz', '.zip'])
+download_dwd_data(raster_links, raster_foldername)
+
+
+# In[28]:
+
+
+# Create JSON
+
+print('\nProcess the Data:')
+
+raster_path = str(Path.cwd() / raster_foldername)
+prj_file = 'gk3.prj'
+
+rasterstats_json, shp_crs_dissolved = zonal_climate_analysis(shp, raster_path, prj_file) # shp comes from get_shp() in the beginning of this program
+
+
+# In[29]:
+
+
+# Load Rasterstats JSON
+
+input_file = rasterstats_json # Created with zonal_climate_analysis(shp_input, raster_folder, prj_file)
+
+# Open rasterstats_dict.json file
+with open(input_file) as json_file:
+    rs = json.load(json_file)
 
 
 # In[30]:
 
 
-plot_folder_path = Path.cwd() / 'plots'
-print(f'\nFinished! Plots saved here: \n{plot_folder_path}\n')
+# Create Maps and Plots
 
+print('\nCreating Map and Plots:')
+matplotlib.use('Agg')  # Use a non-GUI backend. Prevents "QSocketNotifier: Can only be used with threads started with QThread" message in cmd.
 
-# In[ ]:
+# Create Map
+create_map(shp_crs_dissolved)
 
+# Create Plots
+plot_air_temp_min_mean_max()
+plot_frost_ice_days()
+plot_snowcover_days()
+plot_summer_hot_days()
+plot_precipitaion()
+plot_precipitaion_days()
+plot_sunshine_duration()
+plot_vegetation_begin_end()
+plot_vegetation_phase_length()
 
-
-
-
-# In[ ]:
-
-
-
+print(f'\nFinished! Map and plots saved here: \n{Path.cwd() / 'output'}\n')
 

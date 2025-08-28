@@ -1,5 +1,7 @@
 climate_environment_CDC_grids_germany_annual/
-plots/
+data_info/
+output/
+shp/
 *.json
 *.shp
 roadmap.txt
