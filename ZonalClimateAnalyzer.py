@@ -97,13 +97,13 @@ def get_shp():
             try:
                 gdf = gpd.read_file(shp_path)
                 if gdf.crs:
-                    print('\nValid shapefile with valid CRS found.\n')
+                    print('Valid shapefile with valid CRS found.')
                     return shp_path
                 else:
-                    print('\nShapefile found, but CRS is not defined.\n')
+                    print('Shapefile found, but CRS is not defined.')
                     continue
             except Exception as e:
-                print(f'Error reading shapefile: {e}\n')
+                print(f'Error reading shapefile: {e}')
                 continue
 
         # If the input is a folder path, search for any .shp file inside
@@ -113,11 +113,11 @@ def get_shp():
                 print(f'Found shapefiles: {[f.name for f in shp_files]}. \nPlease append the filename to the path and try again.\n')
                 continue
             else:
-                print('\nNo shapefile found in the folder.')
+                print('No shapefile found in the folder.')
                 continue
 
         else:
-            print('\nInvalid path or not a shapefile.')
+            print('Invalid path or not a shapefile.')
             continue
 
 
@@ -232,7 +232,7 @@ def download_dwd_data(links:list[str], dest_dir:str, timeout:int=30):
 
     for file_url in tqdm(links,
                      desc='',
-                     bar_format='{l_bar}{bar:40}| ({n_fmt}/{total_fmt}) Downloading files. This may take a few minutes.',
+                     bar_format='{l_bar}{bar:40}| ({n_fmt}/{total_fmt}) Downloading files.',
                      ncols=120):
         filename = Path(urlparse(file_url).path).name
         file_path = dest / filename
@@ -529,7 +529,6 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
     files_asc_gz = list_of_files(raster_folder, file_type='.asc.gz')
     
     if len(files_asc_gz) != 0:
-        print()
         # Decompress rasterfiles:
         for f in tqdm(files_asc_gz,
                       desc='',
@@ -544,7 +543,6 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
 
     if len(files_asc) != 0:
         # Transform decompressed files to tif and add crs:
-        print()
         for f in tqdm(files_asc,
                       desc='',
                       bar_format='{l_bar}{bar:40}| ({n_fmt}/{total_fmt}) Transforming files to the right format.',
@@ -560,7 +558,6 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
     rasterstats_list = []
 
     # Iterate over files_tif and perform rasterstats calculations on each rasterfile and the shapefile:
-    print()
     for f in tqdm(files_tif,
                   desc='',
                   bar_format='{l_bar}{bar:40}| ({n_fmt}/{total_fmt}) Calculating rasterstats.',
@@ -1219,18 +1216,20 @@ shp = get_shp()
 
 # Download the data
 
+print('\nDownload the data:')
+
 pdf_links = list_of_dwd_data(file_types=['.pdf'])
 raster_links = list_of_dwd_data(file_types=['.asc.gz', '.zip'])
 
 # Download if not already downloaded
 if check_if_already_downloaded(raster_links) is True:
-    print('\nAll files are already downloaded.')
+    print('All files are already downloaded.')
     
 else:
-    print(f'\nDownload the PDF files containing informations about the used data:')
+    print('Download the PDF files containing informations about the DWD data:')
     download_dwd_data(pdf_links, 'data_info')
     
-    print(f'\nDownload the Rasterfiles:')
+    print('Download the Rasterfiles:')
     download_dwd_data(raster_links, 'climate_environment_CDC_grids_germany_annual')
 
 
@@ -1239,7 +1238,7 @@ else:
 
 # Process the Data
 
-print('\nProcess the Data:')
+print('\nProcess the data:')
 
 raster_path = str(Path.cwd() / 'climate_environment_CDC_grids_germany_annual')
 prj_file = 'gk3.prj'
@@ -1285,5 +1284,5 @@ plot_vegetation_begin_end()
 plot_vegetation_phase_length()
 
 print('\nFinished!')
-print(f'Map and plots are saved here: \n{Path.cwd() / 'output'}\n')
+print(f'\nMap and plots are saved here: \n{Path.cwd() / 'output'}\n')
 
