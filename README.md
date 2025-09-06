@@ -4,11 +4,11 @@
 ---
 
 ## 1 | Project Purpose
-This script automates an end‑to‑end workflow to  
+This script automates an end‑to‑end workflow to
 
-1. **Download** annual gridded climate rasters (1951 → latest) from the **DWD Climate Data Center (CDC)**.  
-2. **Clip & analyse** those rasters for a user‑supplied area (polygon shapefile).  
-3. **Summarise** the results as zonal statistics (min / mean / max) in a tidy JSON file.  
+1. **Download** annual gridded climate rasters (1951 → latest) from the **DWD Climate Data Center (CDC)**.
+2. **Clip & analyse** those rasters for a user‑supplied area (polygon shapefile).
+3. **Summarise** the results as zonal statistics (min / mean / max) in a tidy JSON file.
 4. **Visualise** long‑term trends with ready‑made PNG plots. Also creates an interactive map of the analyzed area.
 
 The goal is to give municipalities, researchers and students a quick way to quantify and visualise local climate change indicators without manual GIS work.
@@ -29,6 +29,8 @@ The goal is to give municipalities, researchers and students a quick way to quan
 ---
 
 ## 3 | Quick‑start
+Linux:
+
 ```bash
 # 1. clone & enter
 git clone https://github.com/LevinGiersch/ZonalClimateAnalyzer
@@ -36,19 +38,48 @@ cd ZonalClimateAnalyzer
 
 # 2. create venv
 python3 -m venv venv
+
+# 3. activate venv
 source venv/bin/activate
 
-# 3. install Python ≥3.9 deps (recommended: venv/conda)
+# 4. install Python ≥3.9 deps (recommended: venv/conda)
 pip install -r requirements.txt
 
-# 4. run the script
+# 5. run the script
 python ZonalClimateAnalyzer.py
 # follow the prompt:
 # Enter the path to the shapefile: /path/to/my_area.shp
 
-# 5. wait until the process is finished
+# 6. wait until the process is finished
 ```
-- This program is made for Linux. Maybe Windows support will be added in the future.
+
+Windows:
+
+```powershell
+# 1. clone & enter
+git clone https://github.com/LevinGiersch/ZonalClimateAnalyzer
+cd ZonalClimateAnalyzer
+
+# 2. create venv
+python -m venv venv
+
+# 3. activate venv
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+venv\Scripts\Activate.ps1
+
+# 4. install Python ≥3.9 deps (recommended: venv/conda)
+pip install -r requirements.txt
+
+# 5. run the script
+python ZonalClimateAnalyzer.py
+
+# follow the prompt:
+# Enter the path to the shapefile: C:\path\to\my_area.shp
+
+# 6. wait until the process is finished
+```
+
+
 - Runtime hint: the first execution downloads ≈ 1 GB of rasters and can take 10–20 min (depending on your connection). Subsequent runs use the cached GeoTIFFs and finish in seconds.
 
 ---
@@ -85,16 +116,13 @@ python ZonalClimateAnalyzer.py
 ---
 
 ## 6 | Known Limitations
-- Only works under **Linux**. Support for Windows may be added in the future.
 - Only works for **shapefiles**. Support for eg. geojson may be added in the future.
-- Re‑downloads rasters each year; archive copies yourself for full reproducibility.  
+- Re‑downloads rasters each year; archive copies yourself for full reproducibility.
 
 ---
 
 ## 7 | Citation
 Always credit the **DWD Climate Data Center** when publishing derived work.
 
-> Deutscher Wetterdienst (2025): *Grids Germany – Annual*.  
+> Deutscher Wetterdienst (2025): *Grids Germany – Annual*.
 https://opendata.dwd.de/climate_environment/CDC/grids_germany/annual/
-
----
