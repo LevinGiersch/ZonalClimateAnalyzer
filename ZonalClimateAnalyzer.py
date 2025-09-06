@@ -529,13 +529,13 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
     files_asc_gz = list_of_files(raster_folder, file_type='.asc.gz')
     
     if len(files_asc_gz) != 0:
+        print()
         # Decompress rasterfiles:
         for f in tqdm(files_asc_gz,
                       desc='',
                       bar_format='{l_bar}{bar:40}| ({n_fmt}/{total_fmt}) Decompressing files.',
                       ncols=120):
             decompress_file(f)
-        print('Decompressed files!')
     else:
         print('Files are already decompressed.')
 
@@ -544,12 +544,12 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
 
     if len(files_asc) != 0:
         # Transform decompressed files to tif and add crs:
+        print()
         for f in tqdm(files_asc,
                       desc='',
                       bar_format='{l_bar}{bar:40}| ({n_fmt}/{total_fmt}) Transforming files to the right format.',
                       ncols=120):
             asc_to_tif_add_crs(f, prj_file)
-        print('Transformed files to the right format!')
     else:
         print('Files are already transformed to the right format.')
 
@@ -560,6 +560,7 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
     rasterstats_list = []
 
     # Iterate over files_tif and perform rasterstats calculations on each rasterfile and the shapefile:
+    print()
     for f in tqdm(files_tif,
                   desc='',
                   bar_format='{l_bar}{bar:40}| ({n_fmt}/{total_fmt}) Calculating rasterstats.',
