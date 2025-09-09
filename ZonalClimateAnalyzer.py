@@ -203,7 +203,7 @@ def list_of_dwd_data(file_types=['.asc.gz', '.pdf', '.zip']):
         found = [
             location + a['href']
             for a in soup.find_all('a', href=True)
-            if a['href'].endswith(tuple(file_types))
+            if a['href'].lower().endswith(tuple(file_types))
         ]
         links.append(found)
 
