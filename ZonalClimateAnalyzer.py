@@ -358,9 +358,9 @@ def asc_to_tif_add_crs(asc_input:str, prj_txt:str):
     """
 
     # CRS from .prj_file
-    with open(prj_file, 'r', encoding='utf-8') as f:
-        prj_txt = f.read()
-    crs = CRS.from_wkt(prj_txt)
+    with open(prj_txt, 'r', encoding='utf-8') as f:
+        wkt = f.read()
+    crs = CRS.from_wkt(wkt)
 
     # Read the .asc file
     with rasterio.open(asc_input) as src:
@@ -423,10 +423,9 @@ def change_shp_crs(shp_input:str, prj_txt:str):
     """
 
     # CRS from .prj_file
-    with open(prj_file, 'r', encoding='utf-8') as f:
-        prj_txt = f.read()
-
-    target_crs = CRS.from_wkt(prj_txt)
+    with open(prj_txt, 'r', encoding='utf-8') as f:
+        wkt = f.read()
+    target_crs = CRS.from_wkt(wkt)
 
     # Read Shapefile
     gdf = gpd.read_file(shp_input)
