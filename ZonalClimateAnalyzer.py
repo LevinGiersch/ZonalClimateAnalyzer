@@ -32,6 +32,7 @@ from rasterio.crs import CRS
 from rasterstats import zonal_stats
 
 import matplotlib
+matplotlib.use('Agg')  # Use a non-GUI backend. Prevents "QSocketNotifier: Can only be used with threads started with QThread" message in cmd.
 import matplotlib.pyplot as plt
 
 
@@ -1269,8 +1270,6 @@ with open(input_file) as json_file:
 # Create Maps and Plots
 
 print('\nCreating Map and Plots:')
-matplotlib.use('Agg')  # Use a non-GUI backend. Prevents "QSocketNotifier: Can only be used with threads started with QThread" message in cmd.
-
 
 shp_name = shp.stem
 
