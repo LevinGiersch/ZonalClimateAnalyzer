@@ -1,5 +1,5 @@
 # ZonalClimateAnalyzer
-*Analyze the climate history of any area inside Germany with nothing more than a shapefile.*
+*Analyze the climate history for any area, line or point inside Germany with nothing more than a shapefile.*
 
 ---
 
@@ -32,55 +32,47 @@ The goal is to give municipalities, researchers and students a quick way to quan
 Linux:
 
 ```bash
-# 1. clone & enter
+# 1. Clone & enter
 git clone https://github.com/LevinGiersch/ZonalClimateAnalyzer
 cd ZonalClimateAnalyzer
 
-# 2. create venv
+# 2. Create & activate venv (recommended)
 python3 -m venv venv
-
-# 3. activate venv
 source venv/bin/activate
 
-# 4. install Python ≥3.9 deps (recommended: venv/conda)
+# 3. Install Python ≥3.9 deps
 pip install -r requirements.txt
 
-# 5. run the script
+# 4. Run the script
 python ZonalClimateAnalyzer.py
-# follow the prompt:
+
+# 5. Follow the prompt:
 # Enter the path to the shapefile: /path/to/my_area.shp
 
-# 6. wait until the process is finished
+# 6. Wait until the process is finished
 ```
 
 Windows:
 
-```powershell
-# 1. clone & enter
+```cmd
+# 1. Clone & enter
 git clone https://github.com/LevinGiersch/ZonalClimateAnalyzer
 cd ZonalClimateAnalyzer
 
-# 2. create venv
-python -m venv venv
-
-# 3. activate venv
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
-venv\Scripts\Activate.ps1
-
-# 4. install Python ≥3.9 deps (recommended: venv/conda)
+# 2. Install Python ≥3.9 deps (recommended: venv/conda)
 pip install -r requirements.txt
 
-# 5. run the script
+# 3. Run the script
 python ZonalClimateAnalyzer.py
 
-# follow the prompt:
+# 4. Follow the prompt:
 # Enter the path to the shapefile: C:\path\to\my_area.shp
 
-# 6. wait until the process is finished
+# 5. Wait until the process is finished
 ```
 
 
-- Runtime hint: the first execution downloads ≈ 1 GB of rasters and can take 10–20 min (depending on your connection). Subsequent runs use the cached GeoTIFFs and finish in seconds.
+- Runtime hint: the first execution downloads ≈ 1 GB of rasters and can take 10–20 min (depending on your connection).
 
 ---
 
