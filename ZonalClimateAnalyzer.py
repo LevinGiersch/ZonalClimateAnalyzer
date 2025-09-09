@@ -263,7 +263,11 @@ def list_of_files(folder:str, file_type='.gz'):
         List of all files of file_type within folder
     '''
 
-    files = sorted([os.path.join(folder, f) for f in os.listdir(folder) if f.endswith(file_type)])
+    folder = Path(folder)
+    files = sorted([
+        str(f) for f in folder.iterdir()
+        if f.is_file() and "".join(f.suffixes).lower().endswith(file_type.lower())
+    ])
     return files
 
 
@@ -502,7 +506,7 @@ def calculate_zonal_stats(shp:str, tif:str):
     return stats
 
 
-# In[1]:
+# In[16]:
 
 
 def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
@@ -1207,6 +1211,7 @@ def plot_vegetation_phase_length():
 
 
 # Get the shapefile to analyze
+# /home/luser/Documents/Temporary/brodo.shp
 
 shp = get_shp()
 
