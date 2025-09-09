@@ -314,10 +314,10 @@ def decompress_file(file:str):
         print(f'Filetype is already {ft_ext}, no decompression needed')
 
     elif ft_ext == 'gz':
-        decompressed_file = Path(rename_dwd_file(file))         # Name for output file
-        with gzip.open(file, mode='rb') as f_in:                # Open .gz file and decompress it
-            with open(decompressed_file, mode='wb') as f_out:   # Create decompressed file
-                shutil.copyfileobj(f_in, f_out)                 # Copy content of compressed file to decompressed file
+        decompressed_file = Path(rename_dwd_file(file))            # Name for output file
+        with gzip.open(file, mode='rb') as f_in:                   # Open .gz file and decompress it
+            with open(decompressed_file, mode='wb') as f_out:      # Create decompressed file
+                shutil.copyfileobj(f_in, f_out)                    # Copy content of compressed file to decompressed file
 
     # Unpack the mis‑labelled “…asc.gz” archive (which is really a ZIP)
     elif ft_ext == 'zip':
@@ -358,7 +358,7 @@ def asc_to_tif_add_crs(asc_input:str, prj_txt:str):
     """
 
     # CRS from .prj_file
-    with open(prj_file, 'r') as f:
+    with open(prj_file, 'r', encoding='utf-8') as f:
         prj_txt = f.read()
     crs = CRS.from_wkt(prj_txt)
 
@@ -423,7 +423,7 @@ def change_shp_crs(shp_input:str, prj_txt:str):
     """
 
     # CRS from .prj_file
-    with open(prj_file, 'r') as f:
+    with open(prj_file, 'r', encoding='utf-8') as f:
         prj_txt = f.read()
 
     target_crs = CRS.from_wkt(prj_txt)
@@ -596,7 +596,7 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
     shp_name = path_to_shp.name
     json_output_path_name = shp_name.replace('.shp','')+'_rasterstats.json'
     
-    with open(json_output_path_name, 'w') as rs_json:
+    with open(json_output_path_name, 'w', encoding='utf-8') as rs_json:
         json.dump(rasterstats_json, rs_json)
 
     return json_output_path_name, shp_crs_dissolved
