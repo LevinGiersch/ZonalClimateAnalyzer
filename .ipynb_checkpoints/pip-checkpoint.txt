@@ -1,4 +1,0 @@
-pip install numpy
-pip install click
-pip install Pillow
-pip install matplotlib
