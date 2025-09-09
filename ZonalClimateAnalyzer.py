@@ -571,7 +571,7 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
 
     # Combine rasterstats and the name of the raster the stats are calculated with
     raster_path = str(Path.cwd() / 'climate_environment_CDC_grids_germany_annual')
-    filenames = filenames = [fn.replace(raster_path + '/', '').replace('.tif', '') for fn in files_tif] # Ceate list with filenames without path and type  
+    filenames = [Path(fn).with_suffix('').name for fn in files_tif] # Ceate list with filenames without path and type  
 
     # Delete deprecated files
     delete_raster_files(raster_path)
