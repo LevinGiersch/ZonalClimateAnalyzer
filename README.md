@@ -23,7 +23,7 @@ The goal is to give municipalities, researchers and students a quick way to quan
 | **Pre‑processing** | Decompress → rename → add CRS → re‑encode to GeoTIFF | `decompress_file()`, `asc_to_tif_add_crs()` |
 | **Clean‑up** | Source archives removed to keep disk footprint small | `delete_raster_files()` |
 | **Analysis** | Per‑polygon zonal stats with [`rasterstats`](https://pythonhosted.org/rasterstats/) | `calculate_zonal_stats()` |
-| **Output** | - `area_rasterstats.json` containing the calculated data, <br> - 9 plots showing different climate parameter long term trends, <br> - map of the analyzed area| visualiser section |
+| **Output** | - `area_rasterstats.json` containing the calculated data, <br> - 9 plots showing 17 different climate parameter long term trends, <br> - map of the analyzed area| visualiser section |
 
 
 ---
