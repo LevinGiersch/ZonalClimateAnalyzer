@@ -7,33 +7,27 @@
 # Import Packages
 
 from pathlib import Path
-import os
+from itertools import chain
+from urllib.parse import urlparse
+
 import json
 import shutil
 import zipfile
 import gzip
 import filetype
-
-import numpy as np
-
 from tqdm import tqdm
-from pprint import pprint
-from itertools import chain
 
-from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 
-import folium
 import geopandas as gpd
-from pyproj import CRS
 import rasterio
 from rasterio.crs import CRS
 from rasterstats import zonal_stats
 
-import matplotlib
-matplotlib.use('Agg')  # Use a non-GUI backend. Prevents "QSocketNotifier: Can only be used with threads started with QThread" message in cmd.
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg') # Use a non-GUI backend. Prevents QSocketNotifier.
 
 
 # In[2]:
@@ -62,7 +56,7 @@ def check_crs(shapefile:str):
 
     # Load the shapefile
     gdf = gpd.read_file(shapefile)
-    
+
     # Check if CRS is defined
     valid_crs = gdf.crs
     if valid_crs:
@@ -138,7 +132,7 @@ def check_if_already_downloaded(raster_links:list[str]) -> bool:
     # Return False if folder is empty
     if not any(folder.iterdir()):
         return False
-    
+
     # List of files in the folder
     files = [f for f in folder.iterdir() if f.is_file()]
 
@@ -155,10 +149,8 @@ def check_if_already_downloaded(raster_links:list[str]) -> bool:
 def list_of_dwd_data(file_types=['.asc.gz', '.pdf', '.zip']):
     '''
     Creates a list containing all dwd files to download.
-
     Parameters:
         file_types: string, ending that correspondes to the filetype that we want to download
-
     Returns:
         links: list containing links to all files to download
     '''
@@ -172,7 +164,7 @@ def list_of_dwd_data(file_types=['.asc.gz', '.pdf', '.zip']):
         'drought_index/',
         #'erosivity/',
         'frost_days/',
-        'hot_days/', 
+        'hot_days/',
         'ice_days/',
         'phenology/',
         'precipGE10mm_days/',
@@ -218,16 +210,14 @@ def list_of_dwd_data(file_types=['.asc.gz', '.pdf', '.zip']):
 def download_dwd_data(links:list[str], dest_dir:str, timeout:int=30):
     """
     Download files from a list of full URLs into a target directory.
-
     Parameters:
         links (list[str]): List of full download URLs.
         dest_dir (str or Path): Local directory where the files will be saved.
         timeout (int, optional): Maximum number of seconds to wait for a server response. Defaults to 30.
-
-    Returns:
+    Returns: 
         None
     """
-    
+
     dest = Path(dest_dir)
     dest.mkdir(parents=True, exist_ok=True)
 
@@ -256,7 +246,6 @@ def download_dwd_data(links:list[str], dest_dir:str, timeout:int=30):
 def list_of_files(folder:str, file_type='.gz'):
     '''
     Returns list containing all filesnames in folder with the ending file_type.
-
     Args:
         folder: string, path in filesystem including target folder
         file_type: string, ending that correspondes to the filetype that we want to download
@@ -276,21 +265,22 @@ def list_of_files(folder:str, file_type='.gz'):
 
 
 def rename_dwd_file(file:str):
-        """
-        Takes filename as string as input.
-        Removes everything except for the core name and the year from the dwd filename.
-        Returns new filename as string.
-        """
-        file = file.replace('grids_germany_annual_', '')
-        file = file.removesuffix('.asc.gz')
-        if file.endswith('_1917') or file.endswith('_2017'):
-            pass
-        else:
-            file = file.removesuffix('17')
-        file = file.removesuffix('_')
-        file = file+'.asc'
+    """
+    Takes filename as string as input.
+    Removes everything except for the core name and the year from the dwd filename.
+    Returns new filename as string.
+    """
 
-        return file
+    file = file.replace('grids_germany_annual_', '')
+    file = file.removesuffix('.asc.gz')
+    if file.endswith('_1917') or file.endswith('_2017'):
+        pass
+    else:
+        file = file.removesuffix('17')
+    file = file.removesuffix('_')
+    file = file+'.asc'
+
+    return file
 
 
 # In[10]:
@@ -299,7 +289,6 @@ def rename_dwd_file(file:str):
 def decompress_file(file:str):
     """
     Decompress files and saves a copy in the same folder.
-
     Args:
         file (str): path to file (input file)
     Return:
@@ -314,16 +303,16 @@ def decompress_file(file:str):
         print(f'Filetype is already {ft_ext}, no decompression needed')
 
     elif ft_ext == 'gz':
-        decompressed_file = Path(rename_dwd_file(file))            # Name for output file
-        with gzip.open(file, mode='rb') as f_in:                   # Open .gz file and decompress it
-            with open(decompressed_file, mode='wb') as f_out:      # Create decompressed file
-                shutil.copyfileobj(f_in, f_out)                    # Copy content of compressed file to decompressed file
+        decompressed_file = Path(rename_dwd_file(file))
+        with gzip.open(file, mode='rb') as f_in:
+            with open(decompressed_file, mode='wb') as f_out:
+                shutil.copyfileobj(f_in, f_out)
 
     # Unpack the mis‑labelled “…asc.gz” archive (which is really a ZIP)
     elif ft_ext == 'zip':
-        decompressed_file = Path(rename_dwd_file(file))         # Name for output file
+        decompressed_file = Path(rename_dwd_file(file))
         zip_path = Path(file).expanduser().resolve()
-    
+
         with zipfile.ZipFile(zip_path) as zf:
             # find the first .asc inside the archive
             asc_members = [m for m in zf.namelist() if m.lower().endswith(".asc")]
@@ -332,13 +321,12 @@ def decompress_file(file:str):
             # write it directly to the desired location
             with zf.open(asc_members[0]) as src, decompressed_file.open("wb") as dst:
                 dst.write(src.read())
-                
+
     else:
         print(f'Error while decompressing File: {file}. \nFiletype {ft_ext} is not supported. \nSupported filetypes are: .gz, .zip, .asc or .tif\n')
         raise TypeError(f'Error while decompressing File. Filetype is not supported. Supported filetypes are: .gz, .zip, .asc or .tif')
 
     #print(f'decompress_file: Successfully decompressed \n"{file}" to \n"{decompressed_file}".\n')
-
     return decompressed_file
 
 
@@ -348,11 +336,9 @@ def decompress_file(file:str):
 def asc_to_tif_add_crs(asc_input:str, prj_txt:str):
     """
     Takes asc_input, adds crs (from prj.txt), saves it as .tif in the same folder.
-
     Args:
         asc_input (str): path to asc file (input file)
         prj_txt (str): path to prj file (text file that contains projection information)
-    
     Returns:
         tif_output (tif): path/to/output.tif file
     """
@@ -380,9 +366,8 @@ def asc_to_tif_add_crs(asc_input:str, prj_txt:str):
     # Write to a new GeoTIFF file with CRS assigned
     with rasterio.open(tif_output, 'w', **profile) as dst:
         dst.write(data.astype(rasterio.float32), 1)
-    
-    #print(f'asc_to_tif_add_crs: Successfully transformed \n"{asc_input}" to \n"{tif_output}" \nand added {crs}.\n')
 
+    #print(f'asc_to_tif_add_crs: Successfully transformed \n"{asc_input}" to \n"{tif_output}" \nand added {crs}.\n')
     return tif_output
 
 
@@ -392,11 +377,10 @@ def asc_to_tif_add_crs(asc_input:str, prj_txt:str):
 def delete_raster_files(folder_path:str):
     """
     Deletes all .asc, .asc.gz and .zip files within the folder..
-
     Args:
         folder_path (str): Path to folder containing the files.
     """
-    
+
     folder = Path(folder_path)
     patterns = ['*.asc', '*.asc.gz', '*.zip']
     deleted_files = 0
@@ -413,7 +397,6 @@ def delete_raster_files(folder_path:str):
 def change_shp_crs(shp_input:str, prj_txt:str):
     """
     Takes shp_input, transforms to crs (from prj.txt), outputs as shp_output
-
     Args:
         shp_input (str): path to shp file (input file)
         prj_txt (str): path to prj file (text file that contains projection information)
@@ -448,7 +431,6 @@ def change_shp_crs(shp_input:str, prj_txt:str):
     gdf_transformed.to_file(shp_output, encoding='utf-8')
 
     #print(f'change_shp_crs: Successfully copied \n"{shp_input}" to \n"{shp_output}" \nand added {target_crs}.\n')
-
     return shp_output
 
 
@@ -458,10 +440,8 @@ def change_shp_crs(shp_input:str, prj_txt:str):
 def dissolve_shp(shp_input:str):
     """
     Takes shp_input, dissolve all polygon features into one, outputs as dissolved_shp
-
     Args:
         shp_input (str): path to shp file (input file)
-    
     Returns:
         shp_output (str): path/to/output.tif file
     """
@@ -481,7 +461,7 @@ def dissolve_shp(shp_input:str):
 
     # Save transformed shp to shp_output
     gdf_dissolved.to_file(shp_output, encoding='utf-8')
-    
+
     return shp_output
 
 
@@ -491,11 +471,9 @@ def dissolve_shp(shp_input:str):
 def calculate_zonal_stats(shp:str, tif:str):
     """
     Calculates zonal stats of the tif for each feature in the shp.
-
     Args:
         shp (str): path to shp file
         tif (str): path to tif file
-    
     Returns:
         stats (list[dict]): list of dictionarys which contain min, max, mean and count of the raster data for each poly.
     """
@@ -512,12 +490,10 @@ def calculate_zonal_stats(shp:str, tif:str):
 def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
     """
     Perform rasterstats calculation on shp_input with every raster file in the raster_folder.
-
     Args:
         shp_input (str): path to shp file (input file) to perform calculations on
         raster_folder (str): path to folder containing all raster files to perform the rasterstats calculations with. has to be in .asc.gz file format
         prj_txt (str): path to prj file (text file that contains projection information)
-    
     Creates:
         rasterstats_dict (dict{str:[{}]}): dict containing the name of the raster file as key and the corresponding rasterstats as a list of dicts as values.
     Returns:
@@ -528,10 +504,10 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
     # Prepare shapefile:
     shp_crs = change_shp_crs(shp_input, prj_file)
     shp_crs_dissolved = dissolve_shp(shp_crs)
-    
+
     # Create list of compessed .asc.gz rasterfiles:
     files_asc_gz = list_of_files(raster_folder, file_type='.asc.gz')
-    
+
     if len(files_asc_gz) != 0:
         # Decompress rasterfiles:
         for f in tqdm(files_asc_gz,
@@ -570,7 +546,7 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
 
     # Combine rasterstats and the name of the raster the stats are calculated with
     raster_path = str(Path.cwd() / 'climate_environment_CDC_grids_germany_annual')
-    filenames = [Path(fn).with_suffix('').name for fn in files_tif] # Ceate list with filenames without path and type  
+    filenames = [Path(fn).with_suffix('').name for fn in files_tif]
 
     # Delete deprecated files
     delete_raster_files(raster_path)
@@ -588,13 +564,11 @@ def zonal_climate_analysis(shp_input:str, raster_folder:str, prj_file:str):
             rasterstats_json[name] = {}
         rasterstats_json[name][year] = value
 
-    #pprint(rasterstats_json)
-
     # Export dict as json:
     path_to_shp = Path(shp_crs_dissolved)
     shp_name = path_to_shp.name
     json_output_path_name = shp_name.replace('.shp','')+'_rasterstats.json'
-    
+
     with open(json_output_path_name, 'w', encoding='utf-8') as rs_json:
         json.dump(rasterstats_json, rs_json)
 
@@ -643,7 +617,7 @@ def years_values(parameter_name:str):
     for year in rs[parameter_name].values():
         for entry in year:
             values_min.append(entry['min'])
-    
+
     return title, years, values_max, values_mean, values_min
 
 
@@ -656,7 +630,7 @@ def create_map(shapefile:str):
     Creates interactive map as html.
     Adds area and perimeter as tooltips on hover in the html map.
     '''
-    
+
     shp_path = Path(shapefile)
     gdf = gpd.read_file(shapefile)
     if gdf.crs is None:
@@ -674,7 +648,7 @@ def create_map(shapefile:str):
         tooltip=["shapefile", "area_km2", "perim_km"],
         popup=False
     )
-    
+
     # Save Map
     mapname = shp_name+'_'+'map.html'
     map_folder_path = Path.cwd() / 'output'
@@ -696,7 +670,7 @@ def plot_air_temp_min_mean_max():
 
     # List oft startyears
     startyears = []
-    
+
     # Max Temp
     title, years, values_max, t_max, values_min = years_values('air_temp_max')
     t_max = [t_max[i]/10 for i in range(len(t_max))]                            # 1/10 so it is in degrees noch in degrees/10
@@ -835,7 +809,7 @@ def plot_snowcover_days():
 
     # Fill between lines
     ax.fill_between(years, values_mean_snd, days_in_year_min, color='lightblue', alpha=0.25)
-    
+
     # Gridlines:
     ax.grid(color='lightgrey', linewidth=0.5)
 
@@ -1131,7 +1105,7 @@ def plot_vegetation_begin_end():
     # Add month ticks on right side
     ax2 = ax.twinx()
     month_days = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334]
-    month_labels = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", 
+    month_labels = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun",
                     "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"]
     ax2.set_ylim(ax.get_ylim())
     ax2.set_yticks(month_days)
@@ -1190,8 +1164,8 @@ def plot_vegetation_phase_length():
     ax.set_ylabel('Tage')
     ax.legend(loc='upper right')
     plt.xticks(rotation=45)
-    for label in ax.xaxis.get_ticklabels():  # Iterate over all ticklabels
-        if int(label.get_text()) % 5 == 0:   # Check if ticklabel is dividable by 5
+    for label in ax.xaxis.get_ticklabels():
+        if int(label.get_text()) % 5 == 0:
             label.set_visible(True)
         else:
             label.set_visible(False)
@@ -1229,11 +1203,11 @@ raster_links = list_of_dwd_data(file_types=['.asc.gz', '.zip'])
 # Download if not already downloaded
 if check_if_already_downloaded(raster_links) is True:
     print('All files are already downloaded.')
-    
+
 else:
     print('Download the PDF files containing informations about the DWD data:')
     download_dwd_data(pdf_links, 'data_info')
-    
+
     print('Download the Rasterfiles:')
     download_dwd_data(raster_links, 'climate_environment_CDC_grids_germany_annual')
 
@@ -1251,7 +1225,7 @@ prj_file = 'gk3.prj'
 rasterstats_json, shp_crs_dissolved = zonal_climate_analysis(shp, raster_path, prj_file)
 
 
-# In[31]:
+# In[34]:
 
 
 # Load Rasterstats JSON
@@ -1259,11 +1233,11 @@ rasterstats_json, shp_crs_dissolved = zonal_climate_analysis(shp, raster_path, p
 input_file = rasterstats_json # Created with zonal_climate_analysis(shp_input, raster_folder, prj_file)
 
 # Open rasterstats_dict.json file
-with open(input_file) as json_file:
+with open(input_file, "r", encoding="utf-8") as json_file:
     rs = json.load(json_file)
 
 
-# In[32]:
+# In[35]:
 
 
 # Create Maps and Plots
